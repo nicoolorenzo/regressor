@@ -30,68 +30,60 @@ else:
 if __name__ == "__main__":
     # Load data
     print("Loading data")
+
+    # For retention time use common_cols=['pid', 'rt']
     X, y, desc_cols, fgp_cols = get_my_data(common_cols=['unique_id', 'correct_ccs_avg'], is_smoke_test=is_smoke_test)
 
     # Create results directory if it doesn't exist
     if not os.path.exists('./results'):
         os.makedirs('./results')
 
-    ParamSearchConfig = namedtuple('ParamSearchConfig', ['storage', 'study_prefix', 'param_search_cv', 'n_trials'])
-    param_search_config = ParamSearchConfig(
-        storage="sqlite:///./results/cv.db",
-        study_prefix="dnn",
-        param_search_cv=RepeatedKFold(n_splits=param_search_folds, n_repeats=1, random_state=42),
-        n_trials=number_of_trials
-    )
+    # Do K number of folds for cross validation and save the splits into a variable called splits
+    splitting_function = StratifiedKFold(n_splits=number_of_folds, shuffle=True, random_state=42)
+    # Generate the splits dynamically and train with all the splits
+    fold = 1
+    for train_indexes, test_indexes in splitting_function.split(X, stratify_y(y)):
+        # Use the indexes to actually split the dataset in training and test set.
+        train_split_X = X[train_indexes]
+        train_split_y = y[train_indexes]
+        test_split_X = X[test_indexes]
+        test_split_y = y[test_indexes]
 
-    DnnConfig = namedtuple('DnnConfig', ['train_size', 'n_strats', 'random_state'])
-    dnn_config = DnnConfig(train_size=0.8, n_strats=8, random_state=42)
+        for features in ["fingerprints"]:  #, "descriptors", "all"]
+            # Preprocess X
+            preprocessor = Preprocessor(desc_cols=desc_cols, fgp_cols=fgp_cols)
+            preprocessed_train_split_X = preprocessor.fit_transform(train_split_X, train_split_y)
 
-    cross_validation = StratifiedKFold(n_splits=number_of_folds, shuffle=True, random_state=42)
+            # Preprocess y
+            #TODO:something
+            preprocessed_train_split_y = None  # PipelineWrapper()
 
-    for fold, (train_index, test_index) in enumerate(cross_validation.split(X, stratify_y(y))):
-        fold = fold + 1  # Start counting the folds at fold=1
+            print("Creating DNN")
+            all_cols = np.arange(preprocessed_train_split_X.shape[1])
+            dnn = SkDnn(use_col_indices='all', binary_col_indices=all_cols[:-1], transform_output=True)
+            """ OPTIONS:
+            SkDnn(use_col_indices='all', binary_col_indices=binary_cols, transform_output=True)),
+            SkDnn(use_col_indices=desc_cols, binary_col_indices=binary_cols, transform_output=True)),
+            SkDnn(use_col_indices=fgp_cols, binary_col_indices=binary_cols, transform_output=True))
+            """
 
-        # Split data differently for each fold
-        param_search_config = param_search_config._replace(study_prefix=f"cv-fold-{fold}")
-        train_split_X = X[train_index]
-        train_split_y = y[train_index]
-        test_split_X = X[test_index]
-        test_split_y = y[test_index]
+            print("Param search")
+            study = create_study(model_name="dnn", study_prefix=f"cv-fold-{fold}", storage="sqlite:///./results/cv.db")
+            best_params = param_search(
+                dnn,
+                preprocessed_train_split_X, train_split_y,
+                cv=RepeatedKFold(n_splits=param_search_folds, n_repeats=1, random_state=42),
+                study=study,
+                n_trials=number_of_trials,
+                keep_going=False
+            )
+            print("Training")
+            dnn.set_params(**best_params)
+            dnn.fit(preprocessed_train_split_X, train_split_y)
 
-        # Preprocess X
-        preprocessor = Preprocessor(
-            desc_cols=desc_cols,
-            fgp_cols=fgp_cols
-        )
-        preprocessed_train_split_X = preprocessor.fit_transform(train_split_X, train_split_y)
+            save_preprocessor_and_dnn(preprocessor, dnn, fold)
 
-        # Preprocess y
-        #TODO:something
-        preprocessed_train_split_y = None  # PipelineWrapper()
+            evaluate_model(dnn, preprocessed_train_split_X, test_split_y, fold)
 
-        print("Creating DNN")
-        all_cols = np.arange(preprocessed_train_split_X.shape[1])
-        dnn = SkDnn(use_col_indices='all', binary_col_indices=all_cols[:-1], transform_output=True)
-        """ OPTIONS:
-        SkDnn(use_col_indices='all', binary_col_indices=binary_cols, transform_output=True)),
-        SkDnn(use_col_indices=desc_cols, binary_col_indices=binary_cols, transform_output=True)),
-        SkDnn(use_col_indices=fgp_cols, binary_col_indices=binary_cols, transform_output=True))
-        """
-
-        print("Param search")
-        study = create_study("dnn", param_search_config.study_prefix, param_search_config.storage)
-        best_params = param_search(
-            dnn,
-            preprocessed_train_split_X, train_split_y,
-            cv=param_search_config.param_search_cv,
-            study=study,
-            n_trials=param_search_config.n_trials,
-            keep_going=False
-        )
-        print("Training")
-        dnn.set_params(**best_params)
-        dnn.fit(preprocessed_train_split_X, train_split_y)
-
-        save_preprocessor_and_dnn(preprocessor, dnn, fold)
-        evaluate_model(dnn, preprocessor, test_split_X, test_split_y, fold)
+            # This fold is done, add 1 to the variable fold to keep the count of the number of folds
+            fold = fold + 1

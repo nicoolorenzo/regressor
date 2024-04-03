@@ -5,14 +5,13 @@ from sklearn.metrics import median_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
 
 
-def evaluate_model(dnn, preprocessor, test_split_X, test_split_y, fold):
-    X_test = preprocessor.transform(test_split_X)
+def evaluate_model(dnn, preprocessed_train_split_X, test_split_y, fold):
 
     # This dictionary creates the evaluation results
     evaluation_dictionary = {
-        'mae': mean_absolute_error(test_split_y, dnn.predict(X_test)),
-        'medae': median_absolute_error(test_split_y, dnn.predict(X_test)),
-        'mape': mean_absolute_percentage_error(test_split_y, dnn.predict(X_test)),
+        'mae': mean_absolute_error(test_split_y, dnn.predict(preprocessed_train_split_X)),
+        'medae': median_absolute_error(test_split_y, dnn.predict(preprocessed_train_split_X)),
+        'mape': mean_absolute_percentage_error(test_split_y, dnn.predict(preprocessed_train_split_X)),
         'fold': fold
     }
 
