@@ -7,9 +7,10 @@ from sklearn.model_selection import StratifiedKFold
 
 from models.nn.SkDnn import SkDnn
 from models.preprocessor.Preprocessors import Preprocessor
+from src import preprocessing, training
 from train.param_search import create_study, param_search
 from utils.data_loading import get_my_data
-from utils.data_saving import save_preprocessor_and_dnn
+from utils.data_saving import save_dnn
 from utils.evaluation import evaluate_model
 from utils.stratification import stratify_y
 
@@ -30,9 +31,9 @@ else:
 if __name__ == "__main__":
     # Load data
     print("Loading data")
-
     # For retention time use common_cols=['pid', 'rt']
-    X, y, desc_cols, fgp_cols = get_my_data(common_cols=['unique_id', 'correct_ccs_avg'], is_smoke_test=is_smoke_test)
+    X, y, descriptors_columns, fingerprints_columns = get_my_data(common_cols=['unique_id', 'correct_ccs_avg'],
+                                                                  is_smoke_test=is_smoke_test)
 
     # Create results directory if it doesn't exist
     if not os.path.exists('./results'):
@@ -51,21 +52,20 @@ if __name__ == "__main__":
 
         for features in ["fingerprints"]:  #, "descriptors", "all"]
             # Preprocess X
-            preprocessor = Preprocessor(desc_cols=desc_cols, fgp_cols=fgp_cols)
-            preprocessed_train_split_X = preprocessor.fit_transform(train_split_X, train_split_y)
+            preprocessed_train_split_X, binary_cols = preprocessing.preprocess_X(descriptors_columns=descriptors_columns,
+                                                                    fingerprints_columns=fingerprints_columns,
+                                                                    train_split_X=train_split_X,
+                                                                    train_split_y=train_split_y)
 
             # Preprocess y
             #TODO:something
-            preprocessed_train_split_y = None  # PipelineWrapper()
+            preprocessed_train_split_y = preprocessing.preprocess_y(descriptors_columns=descriptors_columns,
+                                                                    fingerprints_columns=fingerprints_columns,
+                                                                    train_split_X=train_split_X,
+                                                                    train_split_y=train_split_y)  # PipelineWrapper()
 
             print("Creating DNN")
-            all_cols = np.arange(preprocessed_train_split_X.shape[1])
-            dnn = SkDnn(use_col_indices='all', binary_col_indices=all_cols[:-1], transform_output=True)
-            """ OPTIONS:
-            SkDnn(use_col_indices='all', binary_col_indices=binary_cols, transform_output=True)),
-            SkDnn(use_col_indices=desc_cols, binary_col_indices=binary_cols, transform_output=True)),
-            SkDnn(use_col_indices=fgp_cols, binary_col_indices=binary_cols, transform_output=True))
-            """
+            dnn = training.create_dnn(features, fingerprints_columns, descriptors_columns, binary_cols)
 
             print("Param search")
             study = create_study(model_name="dnn", study_prefix=f"cv-fold-{fold}", storage="sqlite:///./results/cv.db")
@@ -81,7 +81,7 @@ if __name__ == "__main__":
             dnn.set_params(**best_params)
             dnn.fit(preprocessed_train_split_X, train_split_y)
 
-            save_preprocessor_and_dnn(preprocessor, dnn, fold)
+            save_dnn(dnn, fold)
 
             evaluate_model(dnn, preprocessed_train_split_X, test_split_y, fold)
 

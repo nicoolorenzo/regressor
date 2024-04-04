@@ -32,7 +32,7 @@ def binary_features_cols(X):
     return np.where(np.apply_along_axis(is_binary_feature, 0, X))[0]
 
 
-class Preprocessor(BaseEstimator):
+class Preprocessor:
     def __init__(self, desc_cols, fgp_cols, p=0, cor_th=0.9, k='all'):
         """ We assume that the adducts indicators are part of the fgp_cols"""
         self.desc_cols = desc_cols
@@ -88,7 +88,7 @@ class Preprocessor(BaseEstimator):
         }
 
 
-class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
+class DescriptorsPreprocessor:
     def __init__(self, desc_cols, adduct_cols, cor_th=0.9, k='all'):
         self.desc_cols = desc_cols
         self.adduct_cols = adduct_cols
@@ -103,6 +103,14 @@ class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
             ('cor_selector', CorThreshold(threshold=self.cor_th)),
             ('f_selector', SelectKBest(score_func=f_regression, k=self.k))
         ])
+
+    def fit_transform(self, X, y=None):
+        if y is None:
+            # fit method of arity 1 (unsupervised transformation)
+            return self.fit(X).transform(X)
+        else:
+            # fit method of arity 2 (supervised transformation)
+            return self.fit(X, y).transform(X)
 
     def fit(self, X, y=None):
         self._init_hidden_models()
@@ -124,13 +132,21 @@ class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
         return new_X
 
 
-class FgpPreprocessor(BaseEstimator, TransformerMixin):
+class FgpPreprocessor:
     def __init__(self, fgp_cols, p=0.9):
         self.fgp_cols = fgp_cols
         self.p = p
 
     def _init_hidden_models(self):
         self._fgp_vs = VarianceThreshold(threshold=self.p * (1 - self.p))
+
+    def fit_transform(self, X, y=None):
+        if y is None:
+            # fit method of arity 1 (unsupervised transformation)
+            return self.fit(X).transform(X)
+        else:
+            # fit method of arity 2 (supervised transformation)
+            return self.fit(X, y).transform(X)
 
     def fit(self, X, y=None):
         self._init_hidden_models()
