@@ -14,6 +14,8 @@ from utils.data_saving import save_dnn
 from utils.evaluation import evaluate_model
 from utils.stratification import stratify_y
 
+from src import optimize_parameters
+
 # Parameters
 is_smoke_test = True
 

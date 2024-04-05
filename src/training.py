@@ -9,7 +9,7 @@ def create_dnn(features, fingerprints_columns, descriptors_columns, binary_colum
     else:
         return SkDnn(use_col_indices='all', binary_col_indices=binary_columns, transform_output=True)
 
-def parameters_optimization(dnn, preprocessed_train_split_X, train_split_y):
+def optimize_parameters(dnn, preprocessed_train_split_X, train_split_y):
     cv = RepeatedKFold(n_splits=param_search_folds, n_repeats=1, random_state=42),
     study = dnn
     n_trials = number_of_trials
