@@ -68,21 +68,18 @@ if __name__ == "__main__":
             dnn = training.create_dnn(features, fingerprints_columns, descriptors_columns, binary_cols)
 
             print("Param search")
-            study = create_study(model_name="dnn", study_prefix=f"cv-fold-{fold}", storage="sqlite:///./results/cv.db")
-            best_params = param_search(
-                dnn,
-                preprocessed_train_split_X, train_split_y,
-                cv=RepeatedKFold(n_splits=param_search_folds, n_repeats=1, random_state=42),
-                study=study,
-                n_trials=number_of_trials,
-                keep_going=False
-            )
+            best_params = training.optimize_parameters(dnn, preprocessed_train_split_X, train_split_y)
+
             print("Training")
             dnn.set_params(**best_params)
+            # TODO: send preprocessed y when ready
             dnn.fit(preprocessed_train_split_X, train_split_y)
 
+            print("Saving dnn used for this fold")
             save_dnn(dnn, fold)
 
+            print("Evaluation of the model & saving of the results")
+            # TODO: send preprocessed y when ready
             evaluate_model(dnn, preprocessed_train_split_X, test_split_y, fold)
 
             # This fold is done, add 1 to the variable fold to keep the count of the number of folds
