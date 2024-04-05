@@ -28,13 +28,12 @@ def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_
     n_trials = number_of_trials
     keep_going = False
 
-    study = optuna.create_study(
-        study_name=f"foundation_cross_validation-fold-{fold}-{features}",
-        direction='minimize',
-        storage="sqlite:///./results/cv.db",
-        load_if_exists=True,
-        pruner=optuna.pruners.MedianPruner()
-    )
+    study = optuna.create_study(study_name=f"foundation_cross_validation-fold-{fold}-{features}",
+                                direction='minimize',
+                                storage="sqlite:///./results/cv.db",
+                                load_if_exists=True,
+                                pruner=optuna.pruners.MedianPruner()
+                                )
 
     objective = create_objective(preprocessed_train_split_X, preprocessed_train_split_y, cv)
     trials = [trial for trial in study.get_trials() if trial.state in [TrialState.COMPLETE, TrialState.PRUNED]]
