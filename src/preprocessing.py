@@ -1,40 +1,22 @@
+from sklearn.preprocessing import QuantileTransformer
+
+from models.preprocessor.Preprocessors import FgpPreprocessor, DescriptorsPreprocessor, Preprocessor
 
 
+def preprocess_X(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):
+    if features == "fingerprints":
+        preproc = FgpPreprocessor(fgp_cols=fingerprints_columns)
+    elif features == "descriptors":
+        preproc = DescriptorsPreprocessor(desc_cols=descriptors_columns, adduct_cols=fingerprints_columns[-3:])
+    else:
+        preproc = Preprocessor(desc_cols=descriptors_columns, fgp_cols=fingerprints_columns)
+    preproc_train_X = preproc.fit_transform(train_X, train_y)
+    preproc_test_X = preproc.transform(test_X, test_y)
+    return preproc_train_X, preproc_test_X, preproc
 
 
-
-
-def preprocess_X(fingerprints_columns, descriptors_columns, train_split_X, train_split_y):
-    p = 0
-    cor_th = 0.9
-    k = 'all'
-
-    def fit(self, X, y=None):
-        self._init_hidden_models()
-        self._desc_preprocessor.fit(X, y)
-        self._fgp_preprocessor.fit(X, y)
-        return self
-
-    def transform(self, X, y=None):
-        X_desc_proc = self._desc_preprocessor.transform(X)
-        X_fgp_proc = self._fgp_preprocessor.transform(X)
-        new_X = np.concatenate([X_desc_proc, X_fgp_proc], axis=1)
-        # Annotate which columns are related to descriptors an fingerprints after transformation. Also, annotate which
-        # columns can be considered binary
-        self.transformed_desc_cols = np.concatenate([
-            np.arange(X_desc_proc.shape[1]),
-            np.arange(new_X.shape[1]-3, new_X.shape[1])
-        ])
-        self.transformed_fgp_cols = np.arange(X_desc_proc.shape[1], new_X.shape[1], dtype='int')
-        self.transformed_binary_cols = binary_features_cols(new_X)
-        return new_X
-
-    preprocessed_train_split_X = fit(train_split_X, train_split_y).transform(train_split_X)
-
-
-    return preprocessed_train_split_X, transformed_binary_cols
-
-
-def preprocess_y(fingerprints_columns, descriptors_columns, train_split_X, train_split_y):
-    pass
-
+def preprocess_y(train_y, test_y):
+    preproc_y = QuantileTransformer(n_quantiles=1000, output_distribution='normal')
+    train_preproc_y = preproc_y.fit_transform(train_y.reshape(-1, 1))
+    test_preproc_y = preproc_y.transform(test_y.reshape(-1, 1))
+    return train_preproc_y.flatten(), test_preproc_y.flatten(), preproc_y

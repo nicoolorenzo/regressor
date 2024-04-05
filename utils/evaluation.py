@@ -5,14 +5,17 @@ from sklearn.metrics import median_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
 
 
-def evaluate_model(dnn, preprocessed_train_split_X, test_split_y, fold):
-
+def evaluate_model(dnn, preprocessed_train_split_X, preproc_test_split_y, preproc_y, fold, features):
+    preproc_y_preds = dnn.predict(preprocessed_train_split_X)
+    test_split_y = preproc_y.inverse_transform(preproc_test_split_y.reshape(-1, 1)).flatten()
+    y_preds = preproc_y.inverse_transform(preproc_y_preds.reshape(-1, 1)).flatten()
     # This dictionary creates the evaluation results
     evaluation_dictionary = {
-        'mae': mean_absolute_error(test_split_y, dnn.predict(preprocessed_train_split_X)),
-        'medae': median_absolute_error(test_split_y, dnn.predict(preprocessed_train_split_X)),
-        'mape': mean_absolute_percentage_error(test_split_y, dnn.predict(preprocessed_train_split_X)),
-        'fold': fold
+        'mae': mean_absolute_error(test_split_y, y_preds),
+        'medae': median_absolute_error(test_split_y, y_preds),
+        'mape': mean_absolute_percentage_error(test_split_y, y_preds),
+        'fold': fold,
+        'features': features
     }
 
     # Convert results dictionary to DataFrame, so it can be easily saved as a csv file

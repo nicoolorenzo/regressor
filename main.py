@@ -5,16 +5,11 @@ import os
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import StratifiedKFold
 
-from models.nn.SkDnn import SkDnn
-from models.preprocessor.Preprocessors import Preprocessor
 from src import preprocessing, training
-from train.param_search import create_study, param_search
 from utils.data_loading import get_my_data
 from utils.data_saving import save_dnn
 from utils.evaluation import evaluate_model
 from utils.stratification import stratify_y
-
-from src import optimize_parameters
 
 # Parameters
 is_smoke_test = True
@@ -52,37 +47,32 @@ if __name__ == "__main__":
         test_split_X = X[test_indexes]
         test_split_y = y[test_indexes]
 
-        for features in ["fingerprints"]:  #, "descriptors", "all"]
+        # TODO: cuando ya funcione todo, dejar puesto: ["fingerprints", "descriptors", "all"]
+        for features in ["descriptors"]:  #, "descriptors", "all"]
             # Preprocess X
-            preprocessed_train_split_X, binary_cols = preprocessing.preprocess_X(descriptors_columns=descriptors_columns,
-                                                                    fingerprints_columns=fingerprints_columns,
-                                                                    train_split_X=train_split_X,
-                                                                    train_split_y=train_split_y)
+            preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_X(
+                 descriptors_columns=descriptors_columns,
+                 fingerprints_columns=fingerprints_columns,
+                 train_X=train_split_X,
+                 train_y=train_split_y,
+                 test_X=test_split_X,
+                 test_y=test_split_y,
+                 features=features
+            )
 
-            # Preprocess y
-            #TODO:something
-            preprocessed_train_split_y = preprocessing.preprocess_y(descriptors_columns=descriptors_columns,
-                                                                    fingerprints_columns=fingerprints_columns,
-                                                                    train_split_X=train_split_X,
-                                                                    train_split_y=train_split_y)  # PipelineWrapper()
-
-            print("Creating DNN")
-            dnn = training.create_dnn(features, fingerprints_columns, descriptors_columns, binary_cols)
+            preprocessed_train_split_y, preprocessed_test_split_y, preproc_y = preprocessing.preprocess_y(
+                train_split_y, test_split_y
+            )
 
             print("Param search")
-            best_params = training.optimize_parameters(dnn, preprocessed_train_split_X, train_split_y)
-
-            print("Training")
-            dnn.set_params(**best_params)
-            # TODO: send preprocessed y when ready
-            dnn.fit(preprocessed_train_split_X, train_split_y)
+            trained_dnn = training.optimize_and_train_dnn(preprocessed_train_split_X, train_split_y,
+                                                          param_search_folds, number_of_trials, fold, features)
 
             print("Saving dnn used for this fold")
-            save_dnn(dnn, fold)
+            save_dnn(trained_dnn, fold, features)
 
             print("Evaluation of the model & saving of the results")
-            # TODO: send preprocessed y when ready
-            evaluate_model(dnn, preprocessed_train_split_X, test_split_y, fold)
+            evaluate_model(trained_dnn, preprocessed_test_split_X, preprocessed_test_split_y, preproc_y, fold, features)
 
             # This fold is done, add 1 to the variable fold to keep the count of the number of folds
             fold = fold + 1
