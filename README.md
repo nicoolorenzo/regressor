@@ -7,7 +7,7 @@ described in:
 
 
 Used to create the yml file:
-conda env create -f environment.yml
+conda env export > environment.yml
 
 You can create your environment as follows:
 conda env create -f environment.yml --name cmmrt_env

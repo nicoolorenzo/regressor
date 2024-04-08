@@ -1,6 +1,5 @@
 from sklearn.preprocessing import QuantileTransformer
-
-from models.preprocessor.Preprocessors import FgpPreprocessor, DescriptorsPreprocessor, Preprocessor
+from BlackBox.Preprocessors import FgpPreprocessor, DescriptorsPreprocessor, Preprocessor
 
 
 def preprocess_X(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):

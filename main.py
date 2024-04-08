@@ -1,8 +1,5 @@
-from collections import namedtuple
-import numpy as np
 import os
 
-from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import StratifiedKFold
 
 from src import preprocessing, training
@@ -48,7 +45,7 @@ if __name__ == "__main__":
         test_split_y = y[test_indexes]
 
         # TODO: cuando ya funcione todo, dejar puesto: ["fingerprints", "descriptors", "all"]
-        for features in ["descriptors"]:  #, "descriptors", "all"]
+        for features in ["descriptors"]:  # "descriptors", "all"]
             # Preprocess X
             preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_X(
                  descriptors_columns=descriptors_columns,

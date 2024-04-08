@@ -4,8 +4,9 @@ from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_regressi
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectorMixin
+from sklearn.utils.validation import check_is_fitted
 
-from models.preprocessor.ThresholdSelectors import CorThreshold
 
 def is_binary_feature(x):
     """Indicates if the given feature is binary (0 and 1).
@@ -20,14 +21,6 @@ def is_binary_feature(x):
         return np.all(np.sort(ux) == np.array([0, 1]))
     else:
         return False
-
-def binary_features_cols(X):
-    """Get column indices of binary features.
-
-    :param X: numpy array of features.
-    :return: numpy array of column indices of binary features.
-    """
-    return np.where(np.apply_along_axis(is_binary_feature, 0, X))[0]
 
 
 class Preprocessor(BaseEstimator, TransformerMixin):
@@ -65,7 +58,7 @@ class Preprocessor(BaseEstimator, TransformerMixin):
             np.arange(new_X.shape[1]-3, new_X.shape[1])
         ])
         self.transformed_fgp_cols = np.arange(X_desc_proc.shape[1], new_X.shape[1], dtype='int')
-        self.transformed_binary_cols = binary_features_cols(new_X)
+        self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, new_X))[0]
         return new_X
 
     def describe_transformed_features(self):
@@ -110,7 +103,7 @@ class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
             new_X = X_desc_proc
         # Annotate which columns are related to descriptors an fingerprints after transformation. Also, annotate which
         # columns can be considered binary
-        self.transformed_binary_cols = binary_features_cols(new_X)
+        self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, new_X))[0]
         return new_X
 
 
@@ -131,5 +124,20 @@ class FgpPreprocessor(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         X_fgp = X[:, self.fgp_cols]
-        self.transformed_binary_cols = binary_features_cols(X_fgp)
+        self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, X_fgp))[0]
         return X_fgp
+
+
+class CorThreshold(SelectorMixin, BaseEstimator):
+    def __init__(self, threshold=0.):
+            self.threshold = threshold
+
+    def fit(self, X, y=None):
+        cor_matrix = np.abs(np.corrcoef(X, rowvar=False))
+        self.upper_tri_ = np.triu(cor_matrix, k=1)
+        return self
+
+    def _get_support_mask(self):
+        check_is_fitted(self)
+        n = self.upper_tri_.shape[1]
+        return np.array([all(self.upper_tri_[:column, column] < self.threshold) for column in range(n)])
