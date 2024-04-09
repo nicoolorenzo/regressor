@@ -35,10 +35,6 @@ def create_objective(X, y, cv):
         # The estimator is a neural network
         estimator = Sequential(layers)
 
-        #FIXME: scoring no se usa, se puede borrar o hay que usarlo después?
-        # Lo de detrás del igual lo he puesto yo, si se usa hay que refactorizar las y's
-        # scoring = median_absolute_error(y_true[:len(y_pred)], y_pred)
-
         cross_val_scores = []
         # FIXME: no se que le pasa, pero cv no tiene splits, he intentado cambiar los 'repeats', pero nada
         for step, (train_index, test_index) in enumerate(cv.split(X, y)):
