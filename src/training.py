@@ -5,15 +5,13 @@ import tensorflow.keras as keras
 
 import optuna
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-
 from BlackBox.param_search import create_objective
+from src.dnn import create_dnn, fit_dnn
 
 
 def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y, param_search_folds, number_of_trials,
                            fold, features):
-    cv = RepeatedKFold(n_splits=param_search_folds, n_repeats=1, random_state=42),
+    cv = RepeatedKFold(n_splits=param_search_folds, n_repeats=1, random_state=42)
     n_trials = number_of_trials
     keep_going = False
 
@@ -33,32 +31,10 @@ def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_
         study.optimize(objective, n_trials=n_trials)
 
     best_params = study.best_params
+    estimator = create_dnn(preprocessed_train_split_X.shape[1], best_params)
+    estimator = fit_dnn(estimator,
+                        preprocessed_train_split_X, 
+                        preprocessed_train_split_y,
+                        best_params)
 
-    # Neural Network architecture
-    # Input layer
-    layers = [Dense(best_params["neurons_per_layer"], input_dim=preprocessed_train_split_X.shape[1])]
-    # Intermediate hidden layers
-    for _ in range(1, best_params["number_of_hidden_layers"]):
-        layers.append(Dense(best_params["neurons_per_layer"], activation=best_params["activation"]))
-        Dropout(best_params["dropout_between_layers"])
-    # Output layer
-    layers.append(Dense(1))
-
-    estimator = Sequential(layers)
-
-    estimator.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=best_params["lr"]),
-        loss=keras.losses.MeanAbsoluteError(),
-        metrics=[
-            keras.metrics.MeanSquaredError(),
-            keras.metrics.MeanRelativeError(),
-        ],
-    )
-    estimator.fit(
-        x=preprocessed_train_split_X,
-        y=preprocessed_train_split_y,
-        batch_size=best_params["batch_size"],
-        epochs=best_params["epochs"],
-        verbose="auto"
-    )
     return estimator

@@ -6,7 +6,7 @@ from sklearn.metrics import mean_absolute_percentage_error
 
 
 def evaluate_model(dnn, preprocessed_train_split_X, preproc_test_split_y, preproc_y, fold, features):
-    preproc_y_preds = dnn.predict(preprocessed_train_split_X)
+    preproc_y_preds = dnn.predict(preprocessed_train_split_X, verbose=0)
     test_split_y = preproc_y.inverse_transform(preproc_test_split_y.reshape(-1, 1)).flatten()
     y_preds = preproc_y.inverse_transform(preproc_y_preds.reshape(-1, 1)).flatten()
     # This dictionary creates the evaluation results
