@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from src import preprocessing, training
 from utils.data_loading import get_my_data
-from utils.evaluation import evaluate_model
+from src.evaluation import evaluate_model
 from utils.stratification import stratify_y
 
 # Parameters

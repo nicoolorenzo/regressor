@@ -1,12 +1,33 @@
 from optuna.trial import TrialState
 from sklearn.model_selection import RepeatedKFold
 
-import tensorflow.keras as keras
-
+import numpy as np
 import optuna
 
-from BlackBox.param_search import create_objective
-from src.dnn import create_dnn, fit_dnn
+from src.models.dnn import suggest_params, create_dnn, fit_dnn
+
+
+def create_objective(X, y, cv):
+    def objective(trial):
+        params = suggest_params(trial)
+        estimator = create_dnn(X.shape[1], params)
+        cross_val_scores = []
+        for step, (train_index, test_index) in enumerate(cv.split(X, y)):
+            X_train, X_test = X[train_index], X[test_index]
+            y_train, y_test = y[train_index], y[test_index]
+            estimator = fit_dnn(estimator, X_train, y_train, params)
+            test_metrics = estimator.evaluate(
+                X_test, y_test, return_dict=True, verbose=0
+            )
+            # loss is MAE Score, use it as optuna metric
+            score = test_metrics["loss"]
+            cross_val_scores.append(score)
+            intermediate_value = np.mean(cross_val_scores)
+            trial.report(intermediate_value, step)
+            if trial.should_prune():
+                raise optuna.TrialPruned()
+        return np.mean(cross_val_scores)
+    return objective
 
 
 def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y, param_search_folds, number_of_trials,
@@ -38,3 +59,9 @@ def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_
                         best_params)
 
     return estimator
+
+
+
+
+
+
