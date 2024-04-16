@@ -9,6 +9,7 @@ from utils.stratification import stratify_y
 
 # Parameters
 is_smoke_test = True
+is_smmrt = True
 
 if is_smoke_test:
     print("Running smoke test...")
@@ -24,8 +25,8 @@ else:
 if __name__ == "__main__":
     # Load data
     print("Loading data")
-    # For retention time use common_cols=['pid', 'rt']
-    X, y, descriptors_columns, fingerprints_columns = get_my_data(common_cols=['unique_id', 'correct_ccs_avg'],
+    common_columns = ['pid', 'rt'] if is_smmrt else ['unique_id', 'correct_ccs_avg']
+    X, y, descriptors_columns, fingerprints_columns = get_my_data(common_columns=common_columns,
                                                                   is_smoke_test=is_smoke_test)
 
     # Create results directory if it doesn't exist
@@ -42,7 +43,8 @@ if __name__ == "__main__":
         test_split_X = X[test_indexes]
         test_split_y = y[test_indexes]
 
-        for features in ["fingerprints", "descriptors", "all"]:
+        features_list = ["fingerprints"] if is_smoke_test else ["fingerprints", "descriptors", "all"]
+        for features in features_list:
             # Preprocess X
             preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_X(
                  descriptors_columns=descriptors_columns,
