@@ -9,7 +9,7 @@ from utils.stratification import stratify_y
 
 # Parameters
 is_smoke_test = True
-is_smmrt = True
+is_smrt = True
 
 if is_smoke_test:
     print("Running smoke test...")
@@ -25,7 +25,7 @@ else:
 if __name__ == "__main__":
     # Load data
     print("Loading data")
-    common_columns = ['pid', 'rt'] if is_smmrt else ['unique_id', 'correct_ccs_avg']
+    common_columns = ['pid', 'rt'] if is_smrt else ['unique_id', 'correct_ccs_avg']
     X, y, descriptors_columns, fingerprints_columns = get_my_data(common_columns=common_columns,
                                                                   is_smoke_test=is_smoke_test)
 

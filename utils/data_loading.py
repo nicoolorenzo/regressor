@@ -82,6 +82,14 @@ def get_my_data(common_columns, is_smoke_test):
         with bz2.BZ2File("./resources/descriptors_and_fingerprints.pklz", "wb") as f:
             pickle.dump([X, y, desc_cols, fgp_cols], f)
 
+    if is_smoke_test:
+        # Drop most of the dataset
+        X = X[:1500]
+        y = y[:1500]
+        # Save the slimmed down data to a file called "smoke_dataset.pklz" for future smoke tests
+        with bz2.BZ2File("./resources/smoke_dataset.pklz", "wb") as f:
+            pickle.dump([X, y, desc_cols, fgp_cols], f)
+
     X = X.astype('float32')
     y = np.array(y).astype('float32').flatten()
 
