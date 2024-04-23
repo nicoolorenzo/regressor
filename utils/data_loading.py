@@ -22,6 +22,15 @@ def get_my_data(common_columns, is_smoke_test):
             - fgp_cols (numpy.ndarray): Indices of columns corresponding to fingerprints in the merged dataset.
     """
 
+
+    #TODO: if RepoRT_classified.tsv doesn't exist: crear RepoRT_classified.tsv con el siguiente código
+
+    #TODO: if RepoRT_callified_with_CCinformation.csv doesn't exist: lo creas
+
+
+
+    ### De cara a un futuro, añadir la descripción de las moléculas
+
     # If we are running a smoke test, and we've already created the complete dataset then:
     if is_smoke_test and os.path.exists("./resources/descriptors_and_fingerprints.pklz"):
         # If we have created the "smoke dataset", load it
