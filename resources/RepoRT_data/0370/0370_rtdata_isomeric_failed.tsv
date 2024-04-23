@@ -1,0 +1,10 @@
+id	name	formula	rt	smiles.std	status	inchi.std	inchikey.std
+0370_00001	2-hydroxy glutaric acid	C5H8O5	8.858		missing SMILES		
+0370_00002	2-Oxoglutaric acid	C5H6O5	8.858		missing SMILES		
+0370_00013	carnitine-C3	C10H19NO4	6.458		missing SMILES		
+0370_00014	Citric acid	C6H8O7	14.342		missing SMILES		
+0370_00030	Isocitric acid	C6H8O7	14.042		missing SMILES		
+0370_00040	PEP	C3H5O6P	13.058		missing SMILES		
+0370_00042	Phosphoglyceric acid A	C3H7O7P	12.783		missing SMILES		
+0370_00046	Succinic Acid	C4H6O4	8.9		missing SMILES		
+0370_00047	Triose phosphate	C3H7O6P	10.45		missing SMILES		
