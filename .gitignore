@@ -1,3 +1,8 @@
 .idea
+/resources/RepoRT_classified.tsv
+/resources/RepoRT_classified_CCinformation.tsv
+/resources/des_no_SMRT.tsv
+/resources/fgp_no_SMRT.tsv
+/resources/des_and_fgp_data/*
 /results/*
 **/__pycache__

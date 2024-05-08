@@ -1,15 +1,12 @@
 import os
-
 from sklearn.model_selection import StratifiedKFold
-
 from src import preprocessing, training
 from utils.data_loading import get_my_data
 from src.evaluation import evaluate_model
 from utils.stratification import stratify_y
 
 # Parameters
-is_smoke_test = True
-is_smrt = True
+is_smoke_test = False
 
 if is_smoke_test:
     print("Running smoke test...")
@@ -25,7 +22,7 @@ else:
 if __name__ == "__main__":
     # Load data
     print("Loading data")
-    common_columns = ['pid', 'rt'] if is_smrt else ['unique_id', 'correct_ccs_avg']
+    common_columns = ['id', 'rt']
     X, y, descriptors_columns, fingerprints_columns = get_my_data(common_columns=common_columns,
                                                                   is_smoke_test=is_smoke_test)
 
@@ -43,7 +40,7 @@ if __name__ == "__main__":
         test_split_X = X[test_indexes]
         test_split_y = y[test_indexes]
 
-        features_list = ["fingerprints"] if is_smoke_test else ["fingerprints", "descriptors", "all"]
+        features_list = ["fingerprints"] if is_smoke_test else ["descriptors", "fingerprints", "all"]
         for features in features_list:
             # Preprocess X
             preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_X(
