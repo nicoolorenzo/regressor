@@ -24,13 +24,14 @@ def create_dnn(n_features, optuna_params):
 
 def suggest_params(trial):
     params = {
-        'number_of_hidden_layers': trial.suggest_int('number_of_hidden_layers', 2, 7),
+        'number_of_hidden_layers': trial.suggest_categorical('number_of_hidden_layers', [2, 6, 10]),
         'dropout_between_layers': trial.suggest_float('dropout_between_layers', 0, 0.5),
         'neurons_per_layer': trial.suggest_categorical('neurons_per_layer', [512, 1024, 2048, 4096]),
-        'epochs': trial.suggest_int('epochs', 10, 100),
-        'activation': trial.suggest_categorical('activation', ['relu', 'leaky_relu', 'gelu', 'swish']),
-        'lr': trial.suggest_float('lr', 10**(-5), 10**(-2), log=True),
-        'batch_size': trial.suggest_categorical('batch_size', [8, 16, 32, 64])
+       # 'neurons_per_layer': trial.suggest_categorical('neurons_per_layer', [10, 20, 50, 100]),
+        'epochs': trial.suggest_categorical('epochs', [1]),
+        'activation': trial.suggest_categorical('activation', ['relu']),
+        'lr': trial.suggest_float('lr', 10**(-6), 10**(-3), log=True),
+        'batch_size': trial.suggest_categorical('batch_size', [16])
     }
     return params
 
