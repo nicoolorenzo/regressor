@@ -53,6 +53,7 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
     if os.path.exists("./resources/descriptors_and_fingerprints_RepoRT.pklz"):
         with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT.pklz", "rb") as f:
             X, y, desc_cols, fgp_cols = pickle.load(f)
+            experiment_data[0] = (0, 0)
     else:
         # Load the original files created with Alvadesk
         descriptors = pd.read_csv("./resources/des_no_SMRT.tsv", sep="\t")
