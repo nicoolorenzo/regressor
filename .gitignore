@@ -5,5 +5,6 @@
 /resources/fgp_no_SMRT.tsv
 /resources/des_and_fgp_data/*
 /resources/descriptors_and_fingerprints_SMRT.pklz
+/resources/descriptors_and_fingerprints_RepoRT.pklz
 /results/*
 **/__pycache__

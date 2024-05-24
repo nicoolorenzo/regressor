@@ -21,9 +21,9 @@ def des_and_fgp():
     data = data.drop(columns=columns_to_drop)
     descriptors = descriptors[~descriptors["MW"].isnull()]
     des_no_SMRT = pd.merge(data, descriptors, on="inchi.std")
-    fng_no_SMRT = pd.merge(data.iloc[:, :3], fingerprints, on="inchi.std")
+    fgp_no_SMRT = pd.merge(data.iloc[:, :3], fingerprints, on="inchi.std")
     des_no_SMRT.to_csv("../resources/des_no_SMRT.tsv", sep='\t', index=False)
-    fng_no_SMRT.to_csv("../resources/fgp_no_SMRT.tsv", sep='\t', index=False)
+    fgp_no_SMRT.to_csv("../resources/fgp_no_SMRT.tsv", sep='\t', index=False)
 
 
 def get_smrt():

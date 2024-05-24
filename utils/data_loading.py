@@ -22,9 +22,9 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
             - desc_cols (numpy.ndarray): Indices of columns corresponding to descriptors in the merged dataset.
             - fgp_cols (numpy.ndarray): Indices of columns corresponding to fingerprints in the merged dataset.
     """
-    experiment_data = {}
+    experiment_data = {"_": (0, 0)}
     # If we are running a smoke test, and we've already created the complete dataset then:
-    if is_smoke_test and os.path.exists("./resources/descriptors_and_fingerprints.pklz"):
+    if is_smoke_test and os.path.exists("./resources/descriptors_and_fingerprints_RepoRT.pklz"):
             # If we have created the "smoke dataset", load it
         if os.path.exists("./resources/smoke_dataset.pklz"):
             with bz2.BZ2File("./resources/smoke_dataset.pklz", "rb") as f:
@@ -32,7 +32,7 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         # If we haven't, create it
         if not os.path.exists("./resources/smoke_dataset.pklz"):
             # Load the complete dataset
-            with bz2.BZ2File("./resources/descriptors_and_fingerprints.pklz", "rb") as f:
+            with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT.pklz", "rb") as f:
                 X, y, desc_cols, fgp_cols = pickle.load(f)
             # Drop most of the dataset
             X = X[:1500]
@@ -46,12 +46,12 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         y = np.array(y).astype('float32').flatten()
 
         # Return the smoke dataset
-        return X, y, desc_cols, fgp_cols
+        return X, y, desc_cols, fgp_cols, experiment_data
 
 
     # Check if we have the file with both databases already merged, and if not, merge them
-    if os.path.exists("./resources/descriptors_and_fingerprints.pklz"):
-        with bz2.BZ2File("./resources/descriptors_and_fingerprints.pklz", "rb") as f:
+    if os.path.exists("./resources/descriptors_and_fingerprints_RepoRT.pklz"):
+        with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT.pklz", "rb") as f:
             X, y, desc_cols, fgp_cols = pickle.load(f)
     else:
         # Load the original files created with Alvadesk
@@ -66,37 +66,33 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         descriptors_and_fingerprints = pd.merge(descriptors, fingerprints, on=common_columns)
         descriptors_and_fingerprints = descriptors_and_fingerprints.fillna(0)
         descriptors_and_fingerprints["rt"] = descriptors_and_fingerprints["rt"]*60
-        if not chromatography_column and not is_smrt:
-            descriptors_and_fingerprints = descriptors_and_fingerprints.drop(columns=descriptors.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
-            descriptors = descriptors.drop(columns=descriptors.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
-            number_columns = descriptors_and_fingerprints["id"].str[0:4].drop_duplicates().values
-            number_molecules = 0
-            for value in number_columns:
-                experiment = int(descriptors_and_fingerprints[descriptors_and_fingerprints["id"].str.startswith(value)].shape[0])
-                experiment_data[value] = (number_molecules, number_molecules + experiment)
-                number_molecules = number_molecules + experiment
-        else:
-            experiment_data[0] = (0, 0)
+        # if not chromatography_column and not is_smrt:
+        #     descriptors_and_fingerprints = descriptors_and_fingerprints.drop(columns=descriptors.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
+        #     descriptors = descriptors.drop(columns=descriptors.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
+        #     number_columns = descriptors_and_fingerprints["id"].str[0:4].drop_duplicates().values
+        #     experiment_data = {}
+        #     number_molecules = 0
+        #     for value in number_columns:
+        #         experiment = int(descriptors_and_fingerprints[descriptors_and_fingerprints["id"].str.startswith(value)].shape[0])
+        #         experiment_data[value] = (number_molecules, number_molecules + experiment)
+        #         number_molecules = number_molecules + experiment
 
-        X_desc = descriptors_and_fingerprints[descriptors.drop(common_columns, axis=1).columns].values
-        X_fgp = descriptors_and_fingerprints[fingerprints.drop(common_columns, axis=1).columns].values
+        # X_desc = descriptors_and_fingerprints[descriptors.drop(common_columns, axis=1).columns].values
+        # X_fgp = descriptors_and_fingerprints[fingerprints.drop(common_columns, axis=1).columns].values
+        X_desc = descriptors_and_fingerprints[descriptors.columns]
+        X_fgp = descriptors_and_fingerprints[fingerprints.drop(common_columns, axis=1).columns]
 
-        X = np.concatenate([X_desc, X_fgp], axis=1)
+        # X = np.concatenate([X_desc, X_fgp], axis=1)
+        X = pd.concat([X_desc, X_fgp], axis=1)
         labels_column = common_columns[1]
         y = descriptors_and_fingerprints[labels_column].values.flatten()
 
         desc_cols = np.arange(X_desc.shape[1], dtype='int')
         fgp_cols = np.arange(X_desc.shape[1], X.shape[1], dtype='int')
-        if is_smrt:
-            if os.path.exists("./resources/descriptors_and_fingerprints_SMRT.pklz"):
-                with bz2.BZ2File("./resources/descriptors_and_fingerprints_SMRT.pklz", "rb") as smrt:
-                    X_smrt, y_smrt, desc_cols_smrt, fgp_cols_smrt = pickle.load(smrt)
-                    if (desc_cols_smrt == desc_cols) and (fgp_cols_smrt == fgp_cols):
-                        X = np.concatenate([X, X_smrt], axis=0)
-                        y = np.concatenate([y, y_smrt], axis=0)
+
         # Save the file that will be use for training
-        with bz2.BZ2File("./resources/descriptors_and_fingerprints.pklz", "wb") as f:
-            pickle.dump([X, y, desc_cols, fgp_cols], f)
+        # with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT.pklz", "wb") as f:
+        #     pickle.dump([X, y, desc_cols, fgp_cols], f)
 
     if is_smoke_test:
         # Drop most of the dataset
@@ -106,8 +102,29 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         with bz2.BZ2File("./resources/smoke_dataset.pklz", "wb") as f:
             pickle.dump([X, y, desc_cols, fgp_cols], f)
 
-    X = X.astype('float32')
+    if not chromatography_column and not is_smrt:
+        desc_cols = np.arange(X.loc[:, "column.usp.code_0":"chiralPhMoment"].shape[1], dtype='int')
+        fgp_cols = np.arange(X.loc[:, "V1":].shape[1], dtype='int')
+        X = X.drop(columns=X.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
+        number_columns = X["id"].str[0:4].drop_duplicates().values
+        experiment_data = {}
+        number_molecules = 0
+        for value in number_columns:
+            experiment = int(X[X["id"].str.startswith(value)].shape[0])
+            experiment_data[value] = (number_molecules, number_molecules + experiment)
+            number_molecules = number_molecules + experiment
+
+    X = X.drop(columns=common_columns, axis=1).astype('float32')
     y = np.array(y).astype('float32').flatten()
+
+    if is_smrt:
+        if os.path.exists("./resources/descriptors_and_fingerprints_SMRT.pklz"):
+            with bz2.BZ2File("./resources/descriptors_and_fingerprints_SMRT.pklz", "rb") as smrt:
+                X_smrt, y_smrt, desc_cols_smrt, fgp_cols_smrt = pickle.load(smrt)
+                if (desc_cols_smrt == desc_cols) and (fgp_cols_smrt == fgp_cols):
+                    X = np.concatenate([X, X_smrt], axis=0)
+                    y = np.concatenate([y, y_smrt], axis=0)
+
 
     return X, y, desc_cols, fgp_cols, experiment_data
 

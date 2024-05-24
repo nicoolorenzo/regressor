@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_regression
 from sklearn.impute import SimpleImputer
@@ -53,10 +54,7 @@ class Preprocessor(BaseEstimator, TransformerMixin):
         new_X = np.concatenate([X_desc_proc, X_fgp_proc], axis=1)
         # Annotate which columns are related to descriptors an fingerprints after transformation. Also, annotate which
         # columns can be considered binary
-        self.transformed_desc_cols = np.concatenate([
-            np.arange(X_desc_proc.shape[1]),
-            np.arange(new_X.shape[1]-3, new_X.shape[1])
-        ])
+        self.transformed_desc_cols = np.concatenate([np.arange(X_desc_proc.shape[1]),np.arange(new_X.shape[1]-3, new_X.shape[1])])
         self.transformed_fgp_cols = np.arange(X_desc_proc.shape[1], new_X.shape[1], dtype='int')
         self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, new_X))[0]
         return new_X
@@ -86,26 +84,52 @@ class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
             ('cor_selector', CorThreshold(threshold=self.cor_th)),
             ('f_selector', SelectKBest(score_func=f_regression, k=self.k))
         ])
+        # self.scaler = StandardScaler()
+        # self.scaler.set_output("pandas")
+        # self.imputer = SimpleImputer(missing_values=np.nan, strategy='median', add_indicator=True)
+        # self.var_threshold = VarianceThreshold()
+        # self.cor_selector = CorThreshold(threshold=self.cor_th)
+        # self.k_best = SelectKBest(score_func=f_regression, k=self.k)
 
     def fit(self, X, y=None):
         self._init_hidden_models()
-        X_desc = X[:, self.desc_cols]
+        #X_desc = X[:, self.desc_cols]
+        X_desc = X.iloc[:, self.desc_cols]
+        self._desc_pipeline.set_output(transform="pandas")
         self._desc_pipeline.fit(X_desc, y)
         return self
+    # def fit(self, X, y=None):
+    #     self._init_hidden_models()
+    #     X_desc = X.iloc[:, self.desc_cols]
+    #     return self
 
     def transform(self, X, y=None):
-        X_desc = X[:, self.desc_cols]
+        # X_desc = X[:, self.desc_cols]
+        X_desc = X.iloc[:, self.desc_cols]
+        self._desc_pipeline.set_output(transform="pandas")
         X_desc_proc = self._desc_pipeline.transform(X_desc)
-        if self.adduct_cols is not None:
-            X_adduct_indicator = X[:, self.adduct_cols]
-            new_X = np.concatenate([X_desc_proc, X_adduct_indicator], axis=1)
-        else:
-            new_X = X_desc_proc
+        new_X = X_desc_proc
         # Annotate which columns are related to descriptors an fingerprints after transformation. Also, annotate which
         # columns can be considered binary
         self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, new_X))[0]
         return new_X
 
+    # def transform(self, X, y=None):
+    #     self._init_hidden_models()
+    #     X_desc = X.iloc[:, self.desc_cols]
+    #     X_desc_proc = self.scaler.fit_transform(X_desc, y)
+    #     X_desc_proc = self.imputer.fit_transform(X_desc_proc, y)
+    #     X_df_desc_proc = pd.DataFrame(X_desc_proc, columns=self.columns_name)
+    #     X_desc_proc = self.var_threshold.fit_transform(X_desc_proc, y)
+    #     X_desc_proc = self.cor_selector.fit_transform(X_desc_proc, y)
+    #     # X_desc_proc = self.k_best.fit_transform(X_desc_proc, y)
+    #     X_df_cor = pd.DataFrame(X_desc_proc)
+#
+    #     new_X = X_desc_proc
+    #     # Annotate which columns are related to descriptors an fingerprints after transformation. Also, annotate which
+    #     # columns can be considered binary
+    #     self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, new_X))[0]
+    #     return new_X
 
 
 class FgpPreprocessor(BaseEstimator, TransformerMixin):
@@ -118,12 +142,14 @@ class FgpPreprocessor(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         self._init_hidden_models()
-        X_fgp = X[:, self.fgp_cols]
+        # X_fgp = X[:, self.fgp_cols]
+        X_fgp = X.iloc[:, self.fgp_cols]
         _ = self._fgp_vs.fit_transform(X_fgp)
         return self
 
     def transform(self, X, y=None):
-        X_fgp = X[:, self.fgp_cols]
+        # X_fgp = X[:, self.fgp_cols]
+        X_fgp = X.iloc[:, self.fgp_cols]
         self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, X_fgp))[0]
         return X_fgp
 
