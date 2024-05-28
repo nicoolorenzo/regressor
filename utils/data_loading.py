@@ -42,7 +42,7 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
                 pickle.dump([X, y, desc_cols, fgp_cols], f)
 
         # Do this necessary preformatting step
-        X = X.astype('float32')
+        X = X.drop(columns=common_columns, axis=1).astype('float32')
         y = np.array(y).astype('float32').flatten()
 
         # Return the smoke dataset
@@ -124,7 +124,6 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
                 if (desc_cols_smrt == desc_cols) and (fgp_cols_smrt == fgp_cols):
                     X = np.concatenate([X, X_smrt], axis=0)
                     y = np.concatenate([y, y_smrt], axis=0)
-
 
     return X, y, desc_cols, fgp_cols, experiment_data
 
