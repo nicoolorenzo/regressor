@@ -73,7 +73,7 @@ if __name__ == "__main__":
         for features in features_list:
             # Preprocess X
             if not chromatography_processing and chromatography_column and features != "fingerprints":
-                preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_X(
+                preprocessed_train_split_X, preprocessed_test_split_X = preprocessing.preprocess_X(
                      descriptors_columns=descriptors_columns,
                      fingerprints_columns=fingerprints_columns,
                      train_X=train_split_X,
@@ -85,7 +85,7 @@ if __name__ == "__main__":
                 preprocessed_train_split_X = pd.concat([columns_not_processed_train, preprocessed_train_split_X], axis=1)
                 preprocessed_test_split_X = pd.concat([columns_not_processed_test, preprocessed_test_split_X], axis=1)
             else:
-                preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_usp_X(
+                preprocessed_train_split_X, preprocessed_test_split_X = preprocessing.preprocess_usp_X(
                     descriptors_columns=descriptors_columns,
                     fingerprints_columns=fingerprints_columns,
                     train_X=train_split_X,

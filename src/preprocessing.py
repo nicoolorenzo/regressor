@@ -16,15 +16,15 @@ def preprocess_usp_X(fingerprints_columns, descriptors_columns, train_X, train_y
     else:
         usp_columns = descriptors_columns[:train_X.loc[:, "column.usp.code_0":"column.usp.code_L7"].shape[1]]
         des_columns = descriptors_columns[train_X.loc[:, "column.usp.code_0":"column.usp.code_L7"].shape[1]:]
-        preproc_usp = FgpPreprocessor(fgp_cols=usp_columns)
-        preproc = Preprocessor(desc_cols=des_columns, fgp_cols=fingerprints_columns)
-        preproc_train_X = preproc.fit_transform(train_X, train_y)
-        preproc_test_X = preproc.transform(test_X, test_y)
-        preproc_usp_train_X = preproc_usp.fit_transform(train_X, train_y)
-        preproc_usp_test_X = preproc_usp.transform(test_X, test_y)
-        preproc_train_X = pd.concat([preproc_usp_train_X, preproc_train_X], axis=1)
-        preproc_test_X = pd.concat([preproc_usp_test_X, preproc_test_X], axis=1)
-    return preproc_train_X, preproc_test_X, preproc
+        preproc_fgp = FgpPreprocessor(fgp_cols=fingerprints_columns)
+        preproc_des = Preprocessor(desc_cols=des_columns, fgp_cols=usp_columns)
+        preproc_des_train_X = preproc_des.fit_transform(train_X, train_y)
+        preproc_des_test_X = preproc_des.transform(test_X, test_y)
+        preproc_fgp_train_X = preproc_fgp.fit_transform(train_X, train_y)
+        preproc_fgp_test_X = preproc_fgp.transform(test_X, test_y)
+        preproc_train_X = pd.concat([preproc_des_train_X, preproc_fgp_train_X], axis=1)
+        preproc_test_X = pd.concat([preproc_des_test_X, preproc_fgp_test_X], axis=1)
+    return preproc_train_X, preproc_test_X
 
 
 def preprocess_X(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):
@@ -36,7 +36,7 @@ def preprocess_X(fingerprints_columns, descriptors_columns, train_X, train_y, te
         preproc = Preprocessor(desc_cols=descriptors_columns, fgp_cols=fingerprints_columns)
     preproc_train_X = preproc.fit_transform(train_X, train_y)
     preproc_test_X = preproc.transform(test_X, test_y)
-    return preproc_train_X, preproc_test_X, preproc
+    return preproc_train_X, preproc_test_X
 
 def preprocess_y(train_y, test_y):
     preproc_y = QuantileTransformer(n_quantiles=1000, output_distribution='normal')
