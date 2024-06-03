@@ -13,9 +13,9 @@ def create_dnn(n_features, optuna_params):
     # Input layer
     layers.append(Dense(neurons_per_layer, input_dim=n_features))
     # Intermediate hidden layers
-    for _ in range(1, number_of_hidden_layers):
+    for _ in range(1, number_of_hidden_layers+1):
         layers.append(Dense(neurons_per_layer, activation=activation))
-        Dropout(dropout_rate)
+        layers.append(Dropout(dropout_rate))
     # Output layer
     layers.append(Dense(1))
 

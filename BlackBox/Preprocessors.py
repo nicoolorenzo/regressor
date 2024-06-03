@@ -36,7 +36,6 @@ class Preprocessor(BaseEstimator, TransformerMixin):
     def _init_hidden_models(self):
         self._desc_preprocessor = DescriptorsPreprocessor(
             desc_cols=self.desc_cols,
-            adduct_cols=None,
             k=self.k,
             cor_th=self.cor_th
         )
@@ -51,7 +50,10 @@ class Preprocessor(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         X_desc_proc = self._desc_preprocessor.transform(X)
         X_fgp_proc = self._fgp_preprocessor.transform(X)
-        new_X = np.concatenate([X_desc_proc, X_fgp_proc], axis=1)
+        if X_fgp_proc.shape[1] == 11:
+            new_X = pd.concat([X_fgp_proc, X_desc_proc], axis=1)
+        else:
+            new_X = pd.concat([X_desc_proc, X_fgp_proc], axis=1)
         # Annotate which columns are related to descriptors an fingerprints after transformation. Also, annotate which
         # columns can be considered binary
         self.transformed_desc_cols = np.concatenate([np.arange(X_desc_proc.shape[1]),np.arange(new_X.shape[1]-3, new_X.shape[1])])
@@ -70,9 +72,8 @@ class Preprocessor(BaseEstimator, TransformerMixin):
 
 
 class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
-    def __init__(self, desc_cols, adduct_cols, cor_th=0.99, k='all'):
+    def __init__(self, desc_cols, cor_th=0.99, k='all'):
         self.desc_cols = desc_cols
-        self.adduct_cols = adduct_cols
         self.cor_th = cor_th
         self.k = k
 
@@ -144,6 +145,7 @@ class FgpPreprocessor(BaseEstimator, TransformerMixin):
         self._init_hidden_models()
         # X_fgp = X[:, self.fgp_cols]
         X_fgp = X.iloc[:, self.fgp_cols]
+        self._fgp_vs.set_output(transform="pandas")
         _ = self._fgp_vs.fit_transform(X_fgp)
         return self
 

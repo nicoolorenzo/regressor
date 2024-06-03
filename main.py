@@ -1,5 +1,5 @@
 import os
-
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
@@ -12,6 +12,7 @@ from utils.stratification import stratify_y
 is_smoke_test = False
 is_smrt = False
 chromatography_column = True
+chromatography_processing = True
 
 if is_smoke_test:
     print("Running smoke test...")
@@ -31,7 +32,6 @@ if __name__ == "__main__":
     X, y, descriptors_columns, fingerprints_columns, experiment_data = get_my_data(common_columns=common_columns,
                                                                   is_smoke_test=is_smoke_test, is_smrt=is_smrt,
                                                                   chromatography_column=chromatography_column)
-    X = pd.DataFrame(X)
     experiment = ["all"]
 
     if experiment != ["all"]:
@@ -61,23 +61,44 @@ if __name__ == "__main__":
             # test_split_y = y_ex[test_indexes]
         fold = 0
         train_split_X,  test_split_X, train_split_y, test_split_y = train_test_split(X_ex, y_ex, test_size=0.2)
-        features_list = ["descriptors"] if is_smoke_test else ["descriptors", "fingerprints", "all"]
+        if not chromatography_processing and chromatography_column:
+            columns_not_processed_train = train_split_X.loc[:, :"flow_rate 17"]
+            columns_not_processed_test = test_split_X.loc[:, :"flow_rate 17"]
+            descriptors_columns = np.arange(descriptors_columns.shape[0]-columns_not_processed_train.shape[1], dtype="int")
+            fingerprints_columns = np.arange(descriptors_columns.shape[0], descriptors_columns.shape[0] +
+                                             fingerprints_columns.shape[0], dtype="int")
+            train_split_X = train_split_X.loc[:, "MW":]
+            test_split_X = test_split_X.loc[:, "MW":]
+        features_list = ["fingerprints"] if is_smoke_test else ["descriptors", "fingerprints", "all"]
         for features in features_list:
             # Preprocess X
-            preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_X(
-                 descriptors_columns=descriptors_columns,
-                 fingerprints_columns=fingerprints_columns,
-                 train_X=train_split_X,
-                 train_y=train_split_y,
-                 test_X=test_split_X,
-                 test_y=test_split_y,
-                 features=features,
-            )
+            if not chromatography_processing and chromatography_column and features != "fingerprints":
+                preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_X(
+                     descriptors_columns=descriptors_columns,
+                     fingerprints_columns=fingerprints_columns,
+                     train_X=train_split_X,
+                     train_y=train_split_y,
+                     test_X=test_split_X,
+                     test_y=test_split_y,
+                     features=features
+                )
+                preprocessed_train_split_X = pd.concat([columns_not_processed_train, preprocessed_train_split_X], axis=1)
+                preprocessed_test_split_X = pd.concat([columns_not_processed_test, preprocessed_test_split_X], axis=1)
+            else:
+                preprocessed_train_split_X, preprocessed_test_split_X, preproc = preprocessing.preprocess_usp_X(
+                    descriptors_columns=descriptors_columns,
+                    fingerprints_columns=fingerprints_columns,
+                    train_X=train_split_X,
+                    train_y=train_split_y,
+                    test_X=test_split_X,
+                    test_y=test_split_y,
+                    features=features
+                )
 
             preprocessed_train_split_y, preprocessed_test_split_y, preproc_y = preprocessing.preprocess_y(
                 train_y=train_split_y, test_y=test_split_y
             )
-            columns_deleted_preprocessing = [column for column in X.columns if column not in preprocessed_train_split_X]
+            columns_deleted_preprocessing = [column for column in train_split_X.columns if column not in preprocessed_train_split_X]
 
             print("Param search")
             trained_dnn = training.optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y,

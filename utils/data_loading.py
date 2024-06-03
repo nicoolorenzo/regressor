@@ -14,6 +14,7 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         common_columns (list): List of common columns used to merge descriptors and fingerprints.
         is_smoke_test (bool): Argument to create or to load a smaller dataset
         is_smrt (bool): Argument to include SMRT dataset
+        chromatography_column (bool): Argument to include chromatography column data and separate in different experiments
 
     Returns:
         tuple: A tuple containing:
@@ -21,6 +22,7 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
             - y (numpy.ndarray): The target values (correct ccs averages).
             - desc_cols (numpy.ndarray): Indices of columns corresponding to descriptors in the merged dataset.
             - fgp_cols (numpy.ndarray): Indices of columns corresponding to fingerprints in the merged dataset.
+            - experiment_data (dict): Position of each experiment in X if chromatography_column is True
     """
     experiment_data = {"_": (0, 0)}
     # If we are running a smoke test, and we've already created the complete dataset then:
@@ -87,12 +89,12 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         labels_column = common_columns[1]
         y = descriptors_and_fingerprints[labels_column].values.flatten()
 
-        desc_cols = np.arange(X_desc.shape[1], dtype='int')
-        fgp_cols = np.arange(X_desc.shape[1], X.shape[1], dtype='int')
+        desc_cols = np.arange(X_desc.drop(common_columns, axis=1).shape[1], dtype='int')
+        fgp_cols = np.arange(X_desc.drop(common_columns, axis=1).shape[1], X.drop(common_columns, axis=1).shape[1], dtype='int')
 
         # Save the file that will be use for training
-        # with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT.pklz", "wb") as f:
-        #     pickle.dump([X, y, desc_cols, fgp_cols], f)
+        with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT.pklz", "wb") as f:
+            pickle.dump([X, y, desc_cols, fgp_cols], f)
 
     if is_smoke_test:
         # Drop most of the dataset
