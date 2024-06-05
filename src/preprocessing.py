@@ -1,8 +1,9 @@
 from sklearn.preprocessing import QuantileTransformer
 from BlackBox.Preprocessors import FgpPreprocessor, DescriptorsPreprocessor, Preprocessor
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
-def preprocess_usp_X(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):
+def preprocess_X_usp(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):
     if features == "fingerprints":
         preproc = FgpPreprocessor(fgp_cols=fingerprints_columns)
         preproc_train_X = preproc.fit_transform(train_X, train_y)
@@ -25,6 +26,22 @@ def preprocess_usp_X(fingerprints_columns, descriptors_columns, train_X, train_y
         preproc_train_X = pd.concat([preproc_des_train_X, preproc_fgp_train_X], axis=1)
         preproc_test_X = pd.concat([preproc_des_test_X, preproc_fgp_test_X], axis=1)
     return preproc_train_X, preproc_test_X
+
+
+def preprocess_X_chromatography(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y,
+                 chromatography_train, chromatography_test, features):
+    if features == "descriptors":
+        preproc = DescriptorsPreprocessor(desc_cols=descriptors_columns)
+    else:
+        preproc = Preprocessor(desc_cols=descriptors_columns, fgp_cols=fingerprints_columns)
+    scaler = StandardScaler().set_output(transform="pandas")
+    chromatography_train_sel = scaler.fit_transform(chromatography_train.iloc[:, 11:])
+    chromatography_test_sel = scaler.fit_transform(chromatography_test.iloc[:, 11:])
+    chromatography_train = pd.concat([chromatography_train.iloc[:, 0:11], chromatography_train_sel], axis=1)
+    chromatography_test = pd.concat([chromatography_test.iloc[:, 0:11], chromatography_test_sel], axis=1)
+    preproc_train_X = preproc.fit_transform(train_X, train_y)
+    preproc_test_X = preproc.transform(test_X, test_y)
+    return preproc_train_X, preproc_test_X, chromatography_train, chromatography_test
 
 
 def preprocess_X(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):

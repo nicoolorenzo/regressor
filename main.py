@@ -73,19 +73,33 @@ if __name__ == "__main__":
         for features in features_list:
             # Preprocess X
             if not chromatography_processing and chromatography_column and features != "fingerprints":
-                preprocessed_train_split_X, preprocessed_test_split_X = preprocessing.preprocess_X(
+                (preprocessed_train_split_X, preprocessed_test_split_X, preprocessed_chromatography_train,
+                 preprocessed_chromatography_test) = preprocessing.preprocess_X_chromatography(
                      descriptors_columns=descriptors_columns,
                      fingerprints_columns=fingerprints_columns,
                      train_X=train_split_X,
                      train_y=train_split_y,
                      test_X=test_split_X,
                      test_y=test_split_y,
+                     chromatography_train = columns_not_processed_train,
+                     chromatography_test = columns_not_processed_test,
                      features=features
                 )
-                preprocessed_train_split_X = pd.concat([columns_not_processed_train, preprocessed_train_split_X], axis=1)
-                preprocessed_test_split_X = pd.concat([columns_not_processed_test, preprocessed_test_split_X], axis=1)
+                preprocessed_train_split_X = pd.concat([preprocessed_chromatography_train, preprocessed_train_split_X], axis=1)
+                preprocessed_test_split_X = pd.concat([preprocessed_chromatography_test, preprocessed_test_split_X], axis=1)
+
+            elif chromatography_processing and chromatography_column:
+                preprocessed_train_split_X, preprocessed_test_split_X = preprocessing.preprocess_X_usp(
+                    descriptors_columns=descriptors_columns,
+                    fingerprints_columns=fingerprints_columns,
+                    train_X=train_split_X,
+                    train_y=train_split_y,
+                    test_X=test_split_X,
+                    test_y=test_split_y,
+                    features=features
+                )
             else:
-                preprocessed_train_split_X, preprocessed_test_split_X = preprocessing.preprocess_usp_X(
+                preprocessed_train_split_X, preprocessed_test_split_X = preprocessing.preprocess_X(
                     descriptors_columns=descriptors_columns,
                     fingerprints_columns=fingerprints_columns,
                     train_X=train_split_X,

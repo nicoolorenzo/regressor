@@ -24,7 +24,7 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
             - fgp_cols (numpy.ndarray): Indices of columns corresponding to fingerprints in the merged dataset.
             - experiment_data (dict): Position of each experiment in X if chromatography_column is True
     """
-    experiment_data = {"_": (0, 0)}
+    experiment_data = {"_": (0, -1)}
     # If we are running a smoke test, and we've already created the complete dataset then:
     if is_smoke_test and os.path.exists("./resources/descriptors_and_fingerprints_RepoRT.pklz"):
             # If we have created the "smoke dataset", load it
@@ -43,6 +43,8 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
             with bz2.BZ2File("./resources/smoke_dataset.pklz", "wb") as f:
                 pickle.dump([X, y, desc_cols, fgp_cols], f)
 
+        if not chromatography_column and not is_smrt:
+            experiment_data, X, desc_cols, fgp_cols = delete_chromatography_columns(X)
         # Do this necessary preformatting step
         X = X.drop(columns=common_columns, axis=1).astype('float32')
         y = np.array(y).astype('float32').flatten()
@@ -68,23 +70,9 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         descriptors_and_fingerprints = pd.merge(descriptors, fingerprints, on=common_columns)
         descriptors_and_fingerprints = descriptors_and_fingerprints.fillna(0)
         descriptors_and_fingerprints["rt"] = descriptors_and_fingerprints["rt"]*60
-        # if not chromatography_column and not is_smrt:
-        #     descriptors_and_fingerprints = descriptors_and_fingerprints.drop(columns=descriptors.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
-        #     descriptors = descriptors.drop(columns=descriptors.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
-        #     number_columns = descriptors_and_fingerprints["id"].str[0:4].drop_duplicates().values
-        #     experiment_data = {}
-        #     number_molecules = 0
-        #     for value in number_columns:
-        #         experiment = int(descriptors_and_fingerprints[descriptors_and_fingerprints["id"].str.startswith(value)].shape[0])
-        #         experiment_data[value] = (number_molecules, number_molecules + experiment)
-        #         number_molecules = number_molecules + experiment
-
-        # X_desc = descriptors_and_fingerprints[descriptors.drop(common_columns, axis=1).columns].values
-        # X_fgp = descriptors_and_fingerprints[fingerprints.drop(common_columns, axis=1).columns].values
         X_desc = descriptors_and_fingerprints[descriptors.columns]
         X_fgp = descriptors_and_fingerprints[fingerprints.drop(common_columns, axis=1).columns]
 
-        # X = np.concatenate([X_desc, X_fgp], axis=1)
         X = pd.concat([X_desc, X_fgp], axis=1)
         labels_column = common_columns[1]
         y = descriptors_and_fingerprints[labels_column].values.flatten()
@@ -105,16 +93,7 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
             pickle.dump([X, y, desc_cols, fgp_cols], f)
 
     if not chromatography_column and not is_smrt:
-        desc_cols = np.arange(X.loc[:, "column.usp.code_0":"chiralPhMoment"].shape[1], dtype='int')
-        fgp_cols = np.arange(X.loc[:, "V1":].shape[1], dtype='int')
-        X = X.drop(columns=X.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
-        number_columns = X["id"].str[0:4].drop_duplicates().values
-        experiment_data = {}
-        number_molecules = 0
-        for value in number_columns:
-            experiment = int(X[X["id"].str.startswith(value)].shape[0])
-            experiment_data[value] = (number_molecules, number_molecules + experiment)
-            number_molecules = number_molecules + experiment
+        experiment_data, X, desc_cols, fgp_cols = delete_chromatography_columns(X)
 
     X = X.drop(columns=common_columns, axis=1).astype('float32')
     y = np.array(y).astype('float32').flatten()
@@ -130,7 +109,16 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
     return X, y, desc_cols, fgp_cols, experiment_data
 
 
-
-
-
+def delete_chromatography_columns(X):
+    X = X.drop(columns=X.loc[:, "column.usp.code_0":"flow_rate 17"].columns, axis=1)
+    desc_cols = np.arange(X.loc[:, "MW":"chiralPhMoment"].shape[1], dtype='int')
+    fgp_cols = np.arange(desc_cols.shape[0], desc_cols.shape[0] + X.loc[:,"V1":].shape[1], dtype='int')
+    number_columns = X["id"].str[0:4].drop_duplicates().values
+    experiment_data = {}
+    number_molecules = 0
+    for value in number_columns:
+        experiment = int(X[X["id"].str.startswith(value)].shape[0])
+        experiment_data[value] = (number_molecules, number_molecules + experiment)
+        number_molecules = number_molecules + experiment
+    return experiment_data, X, desc_cols, fgp_cols
 
