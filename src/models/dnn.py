@@ -1,9 +1,9 @@
 import tensorflow.keras as keras
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
+from keras.callbacks import EarlyStopping
 
-
-def create_dnn(n_features, optuna_params):
+def create_dnnNot(n_features, optuna_params):
     neurons_per_layer = optuna_params["neurons_per_layer"]
     number_of_hidden_layers = optuna_params["number_of_hidden_layers"]
     activation = optuna_params["activation"]
@@ -36,7 +36,7 @@ def suggest_params(trial):
     return params
 
 
-def fit_dnn(dnn, X, y, optuna_params):
+def fit_dnnNot(dnn, X, y, optuna_params):
     dnn.compile(
         optimizer=keras.optimizers.Adam(learning_rate=optuna_params["lr"]),
         loss=keras.losses.MeanAbsoluteError(),
@@ -51,5 +51,60 @@ def fit_dnn(dnn, X, y, optuna_params):
         batch_size=optuna_params["batch_size"],
         epochs=optuna_params["epochs"],
         verbose=0
+    )
+    return dnn
+
+def create_dnn(n_features, optuna_params):
+    activation1 = keras.activations.swish #optuna_params["activation1"]
+    input_deep = keras.layers.Input(shape=(n_features,))
+    layer_previous = Dense(2500, activation=activation1)(input_deep)
+
+    for _ in range(1,3):
+        new_layer=Dense(2500, activation=activation1)(layer_previous)
+        layer_previous=new_layer
+
+    for _ in range(1, 8):
+        new_layer=Dense(2500, activation=activation1)(layer_previous)
+        layer_previous=new_layer
+
+    layers_deep = layer_previous
+
+    layer_1 = Dense(2500, activation=activation1)(input_deep)
+    layer_2 = Dense(2500, activation=activation1)(layer_1)
+    layers_wide = layer_2
+
+    concat = keras.layers.concatenate([layers_deep, layers_wide])
+    layer_previous = Dense(80, activation=activation1)(concat)
+
+    for _ in range(1, 3):
+        new_layer=Dense(80, activation=activation1)(layer_previous)
+        layer_previous=new_layer
+
+    layers_deep_and_wide_small = layer_previous
+    output = Dense(1)(layers_deep_and_wide_small)
+    model = keras.Model(inputs=[input_deep], outputs=[output])
+
+    return model
+
+
+stop_here_please = EarlyStopping(patience=5)
+
+def fit_dnn(dnn, X, y, optuna_params):
+    dnn.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=9*10 ** (-6)),
+        loss=keras.losses.MeanAbsoluteError(),
+        metrics=[
+            keras.metrics.MeanSquaredError(),
+            keras.metrics.MeanAbsolutePercentageError()
+        ],
+    )
+    dnn.fit(
+        x=X,
+        y=y,
+        batch_size=16,
+        epochs=50,
+        verbose=1,
+        validation_split=0.1
+        ,callbacks=[stop_here_please]
     )
     return dnn
