@@ -18,8 +18,8 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
 
     Returns:
         tuple: A tuple containing:
-            - X (numpy.ndarray): The merged dataset consisting of descriptors and fingerprints.
-            - y (numpy.ndarray): The target values (correct ccs averages).
+            - X (DataFrame): The merged dataset consisting of descriptors and fingerprints.
+            - y (DataFrame): The target values (correct rt averages).
             - desc_cols (numpy.ndarray): Indices of columns corresponding to descriptors in the merged dataset.
             - fgp_cols (numpy.ndarray): Indices of columns corresponding to fingerprints in the merged dataset.
             - experiment_data (dict): Position of each experiment in X if chromatography_column is True
@@ -46,8 +46,8 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
         if not chromatography_column and not is_smrt:
             experiment_data, X, desc_cols, fgp_cols = delete_chromatography_columns(X)
         # Do this necessary preformatting step
-        X = X.drop(columns=common_columns, axis=1).astype('float32')
-        y = np.array(y).astype('float32').flatten()
+        # X = X.drop(columns=common_columns, axis=1).astype('float32')
+        # y = np.array(y).astype('float32').flatten()
 
         # Return the smoke dataset
         return X, y, desc_cols, fgp_cols, experiment_data
@@ -95,8 +95,8 @@ def get_my_data(common_columns, is_smoke_test, is_smrt, chromatography_column):
     if not chromatography_column and not is_smrt:
         experiment_data, X, desc_cols, fgp_cols = delete_chromatography_columns(X)
 
-    X = X.drop(columns=common_columns, axis=1).astype('float32')
-    y = np.array(y).astype('float32').flatten()
+   # X = X.drop(columns=common_columns, axis=1).astype('float32')
+   # y = np.array(y).astype('float32').flatten()
 
     if is_smrt:
         if os.path.exists("./resources/descriptors_and_fingerprints_SMRT.pklz"):

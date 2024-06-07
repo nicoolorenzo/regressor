@@ -7,12 +7,14 @@ from src import preprocessing, training
 from utils.data_loading import get_my_data
 from src.evaluation import evaluate_model
 from utils.stratification import stratify_y
+import random
 
 # Parameters
 is_smoke_test = False
 is_smrt = False
 chromatography_column = True
 chromatography_processing = True
+train_test_split_experiments = True
 
 if is_smoke_test:
     print("Running smoke test...")
@@ -60,7 +62,22 @@ if __name__ == "__main__":
             # test_split_X = X_ex[test_indexes]
             # test_split_y = y_ex[test_indexes]
         fold = 0
-        train_split_X,  test_split_X, train_split_y, test_split_y = train_test_split(X_ex, y_ex, test_size=0.2)
+        if train_test_split_experiments:
+            X_ex["id"] = X_ex["id"].str[0:4]
+            unique_experiments = X_ex["id"].unique()
+            train_experiments = random.sample(list(unique_experiments), k=int(len(unique_experiments) * 0.8))
+            train_data = X_ex[X_ex['id'].isin(train_experiments)]
+            test_data = X_ex[~X_ex['id'].isin(train_experiments)]
+            train_split_X = train_data.drop(columns=common_columns, axis=1).astype('float32')
+            test_split_X = test_data.drop(columns=common_columns, axis=1).astype('float32')
+            train_split_y = np.array(train_data["rt"]).astype('float32').flatten()
+            test_split_y = np.array(test_data["rt"]).astype('float32').flatten()
+
+        else:
+            X = X.drop(columns=common_columns, axis=1).astype('float32')
+            y = np.array(y).astype('float32').flatten()
+            train_split_X, test_split_X, train_split_y, test_split_y = train_test_split(X_ex, y_ex, test_size=0.2,
+                                                                                        random_state=42)
         if not chromatography_processing and chromatography_column:
             columns_not_processed_train = train_split_X.loc[:, :"flow_rate 17"]
             columns_not_processed_test = test_split_X.loc[:, :"flow_rate 17"]
