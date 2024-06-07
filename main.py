@@ -10,30 +10,20 @@ from utils.stratification import stratify_y
 import random
 
 # Parameters
-is_smoke_test = False
-is_smrt = False
-chromatography_column = True
-chromatography_processing = True
-train_test_split_experiments = True
-
-if is_smoke_test:
-    print("Running smoke test...")
-    number_of_folds = 2
-    number_of_trials = 2
-    param_search_folds = 2
-else:
-    number_of_folds = 5
-    number_of_trials = 15
-    param_search_folds = 5
+number_of_folds = 1
+number_of_trials = 2
+utilize_chromatography_column = True
+keep_all_chromatographic_columns_in_preprocessing = True
+split_train_test_by_experiment = True
 
 
 if __name__ == "__main__":
     # Load data
     print("Loading data")
-    common_columns = ['id', 'rt']
-    X, y, descriptors_columns, fingerprints_columns, experiment_data = get_my_data(common_columns=common_columns,
-                                                                  is_smoke_test=is_smoke_test, is_smrt=is_smrt,
-                                                                  chromatography_column=chromatography_column)
+    X, y, descriptors_columns, fingerprints_columns = get_my_data()
+
+    if not chromatography_column:
+        experiment_data, X, desc_cols, fgp_cols = delete_chromatography_columns(X)
     experiment = ["all"]
 
     if experiment != ["all"]:
@@ -41,7 +31,7 @@ if __name__ == "__main__":
     else:
         experiment_key_values = [(key, value) for key, value in experiment_data.items()]
     for key, values in experiment_key_values:
-        if not chromatography_column and not is_smrt:
+        if not utilize_chromatography_column and not is_smrt:
             X_ex = X[values[0]:values[1]]
             y_ex = y[values[0]:values[1]]
         else:
@@ -62,7 +52,7 @@ if __name__ == "__main__":
             # test_split_X = X_ex[test_indexes]
             # test_split_y = y_ex[test_indexes]
         fold = 0
-        if train_test_split_experiments:
+        if split_train_test_by_experiment:
             X_ex["id"] = X_ex["id"].str[0:4]
             unique_experiments = X_ex["id"].unique()
             train_experiments = random.sample(list(unique_experiments), k=int(len(unique_experiments) * 0.8))
@@ -78,7 +68,7 @@ if __name__ == "__main__":
             y = np.array(y).astype('float32').flatten()
             train_split_X, test_split_X, train_split_y, test_split_y = train_test_split(X_ex, y_ex, test_size=0.2,
                                                                                         random_state=42)
-        if not chromatography_processing and chromatography_column:
+        if not keep_info_chromatography_processing and utilize_chromatography_column:
             columns_not_processed_train = train_split_X.loc[:, :"flow_rate 17"]
             columns_not_processed_test = test_split_X.loc[:, :"flow_rate 17"]
             descriptors_columns = np.arange(descriptors_columns.shape[0]-columns_not_processed_train.shape[1], dtype="int")
@@ -89,7 +79,7 @@ if __name__ == "__main__":
         features_list = ["fingerprints"] if is_smoke_test else ["descriptors", "fingerprints", "all"]
         for features in features_list:
             # Preprocess X
-            if not chromatography_processing and chromatography_column and features != "fingerprints":
+            if not keep_info_chromatography_processing and utilize_chromatography_column and features != "fingerprints":
                 (preprocessed_train_split_X, preprocessed_test_split_X, preprocessed_chromatography_train,
                  preprocessed_chromatography_test) = preprocessing.preprocess_X_chromatography(
                      descriptors_columns=descriptors_columns,
@@ -105,7 +95,7 @@ if __name__ == "__main__":
                 preprocessed_train_split_X = pd.concat([preprocessed_chromatography_train, preprocessed_train_split_X], axis=1)
                 preprocessed_test_split_X = pd.concat([preprocessed_chromatography_test, preprocessed_test_split_X], axis=1)
 
-            elif chromatography_processing and chromatography_column:
+            elif keep_info_chromatography_processing and utilize_chromatography_column:
                 preprocessed_train_split_X, preprocessed_test_split_X = preprocessing.preprocess_X_usp(
                     descriptors_columns=descriptors_columns,
                     fingerprints_columns=fingerprints_columns,
