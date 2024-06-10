@@ -3,45 +3,44 @@ from BlackBox.Preprocessors import FgpPreprocessor, DescriptorsPreprocessor, Pre
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-def preprocess_X_usp(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):
+def preprocess_X_except_usp(usp_columns, chromatography_columns, descriptors_columns,fingerprints_columns,
+                     train_X, train_y, test_X, test_y, features):
     if features == "fingerprints":
-        preproc = FgpPreprocessor(fgp_cols=fingerprints_columns)
-        preproc_train_X = preproc.fit_transform(train_X, train_y)
-        preproc_test_X = preproc.transform(test_X, test_y)
+        preproc_chromatography = Preprocessor(desc_cols=chromatography_columns, fgp_cols=usp_columns)
+        preproc_des_fgp = FgpPreprocessor(fgp_cols=fingerprints_columns)
     elif features == "descriptors":
-        usp_columns = descriptors_columns[:train_X.loc[:, "column.usp.code_0":"column.usp.code_L7"].shape[1]]
-        des_columns = descriptors_columns[train_X.loc[:, "column.usp.code_0":"column.usp.code_L7"].shape[1]:]
-        preproc = Preprocessor(desc_cols=des_columns, fgp_cols=usp_columns)
-        preproc_train_X = preproc.fit_transform(train_X, train_y)
-        preproc_test_X = preproc.transform(test_X, test_y)
+        preproc_chromatography = Preprocessor(desc_cols=chromatography_columns, fgp_cols=usp_columns)
+        preproc_des_fgp = DescriptorsPreprocessor(desc_cols=descriptors_columns)
     else:
-        usp_columns = descriptors_columns[:train_X.loc[:, "column.usp.code_0":"column.usp.code_L7"].shape[1]]
-        des_columns = descriptors_columns[train_X.loc[:, "column.usp.code_0":"column.usp.code_L7"].shape[1]:]
-        preproc_fgp = FgpPreprocessor(fgp_cols=fingerprints_columns)
-        preproc_des = Preprocessor(desc_cols=des_columns, fgp_cols=usp_columns)
-        preproc_des_train_X = preproc_des.fit_transform(train_X, train_y)
-        preproc_des_test_X = preproc_des.transform(test_X, test_y)
-        preproc_fgp_train_X = preproc_fgp.fit_transform(train_X, train_y)
-        preproc_fgp_test_X = preproc_fgp.transform(test_X, test_y)
-        preproc_train_X = pd.concat([preproc_des_train_X, preproc_fgp_train_X], axis=1)
-        preproc_test_X = pd.concat([preproc_des_test_X, preproc_fgp_test_X], axis=1)
+        preproc_des_fgp = Preprocessor(desc_cols=descriptors_columns, fgp_cols=fingerprints_columns)
+        preproc_chromatography = Preprocessor(desc_cols=chromatography_columns, fgp_cols=usp_columns)
+    preproc_des_fgp_train_X = preproc_des_fgp.fit_transform(train_X, train_y)
+    preproc_des_fgp_test_X = preproc_des_fgp.transform(test_X, test_y)
+    preproc_chrom_train_X = preproc_chromatography.fit_transform(train_X, train_y)
+    preproc_chrom_test_X = preproc_chromatography.transform(test_X, test_y)
+    preproc_train_X = pd.concat([preproc_chrom_train_X, preproc_des_fgp_train_X], axis=1)
+    preproc_test_X = pd.concat([preproc_chrom_test_X, preproc_des_fgp_test_X], axis=1)
     return preproc_train_X, preproc_test_X
 
 
-def preprocess_X_chromatography(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y,
-                 chromatography_train, chromatography_test, features):
-    if features == "descriptors":
+def preprocess_X_except_chromatography(usp_columns, chromatography_columns, descriptors_columns,fingerprints_columns,
+                                       train_X, train_y, test_X, test_y, features):
+    if features == "fingerprints":
+        preproc = FgpPreprocessor(fgp_cols=fingerprints_columns)
+    elif features == "descriptors":
         preproc = DescriptorsPreprocessor(desc_cols=descriptors_columns)
     else:
         preproc = Preprocessor(desc_cols=descriptors_columns, fgp_cols=fingerprints_columns)
     scaler = StandardScaler().set_output(transform="pandas")
-    chromatography_train_sel = scaler.fit_transform(chromatography_train.iloc[:, 11:])
-    chromatography_test_sel = scaler.fit_transform(chromatography_test.iloc[:, 11:])
-    chromatography_train = pd.concat([chromatography_train.iloc[:, 0:11], chromatography_train_sel], axis=1)
-    chromatography_test = pd.concat([chromatography_test.iloc[:, 0:11], chromatography_test_sel], axis=1)
+    chromatography_train = scaler.fit_transform(train_X.loc[:, chromatography_columns])
+    chromatography_test = scaler.fit_transform(test_X.loc[:, chromatography_columns])
+    chromatography_train = pd.concat([train_X.loc[:, usp_columns], chromatography_train], axis=1)
+    chromatography_test = pd.concat([test_X.loc[:, usp_columns], chromatography_test], axis=1)
     preproc_train_X = preproc.fit_transform(train_X, train_y)
     preproc_test_X = preproc.transform(test_X, test_y)
-    return preproc_train_X, preproc_test_X, chromatography_train, chromatography_test
+    preproc_train_X = pd.concat([chromatography_train, preproc_train_X], axis=1)
+    preproc_test_X= pd.concat([chromatography_test, preproc_test_X], axis=1)
+    return preproc_train_X, preproc_test_X
 
 
 def preprocess_X(fingerprints_columns, descriptors_columns, train_X, train_y, test_X, test_y, features):

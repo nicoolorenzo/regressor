@@ -1,36 +1,42 @@
 import bz2
 import os
 import pickle
-import numpy as np
 import pandas as pd
-from utils.cure_descriptors_and_fingerprints import cure
+from glob import glob
+import numpy as np
+from scripts import Gradient_data
+import re
+from formula_validation.Formula import Formula
+import zipfile
+import io
+
 
 
 def get_my_data():
     #FIXME: Ana docstring
     """
-        Accesses RepoRT data based on a specified molecule pattern and column.
+        Accesses RepoRT chromatography_data based on a specified molecule pattern and column.
 
-    This function searches for files in the '../data/*/' RepoRT_directory containing molecule and retention time data.
-    It reads the data from these files, filters it based on the provided molecule pattern and column location,
+    This function searches for files in the '../chromatography_data/*/' RepoRT_directory containing molecule and retention time chromatography_data.
+    It reads the chromatography_data from these files, filters it based on the provided molecule pattern and column location,
     and merges it with an alternative parents dataset.
 
     Args:
-        pattern (str, optional): Molecule pattern or name to search for in the data. Default value "", representing
+        pattern (str, optional): Molecule pattern or name to search for in the chromatography_data. Default value "", representing
         all types of molecules.
         location (str, optional): Column name to search for the pattern. Default value ".*", representing all columns.
-        imputation (bool, optional): Indicates whether training data processing is performed. Default value True.
+        imputation (bool, optional): Indicates whether training chromatography_data processing is performed. Default value True.
 
     Returns:
-        DataFrame: Processed DataFrame containing the merged data with its chromatographic information.
+        DataFrame: Processed DataFrame containing the merged chromatography_data with its chromatographic information.
 
-    Load or merge Alvadesk files containing descriptors and fingerprints, returning the necessary data for training.
+    Load or merge Alvadesk files containing descriptors and fingerprints, returning the necessary chromatography_data for training.
 
     Args:
         common_columns (list): List of common columns used to merge descriptors and fingerprints.
         is_smoke_test (bool): Argument to create or to load a smaller dataset
         is_smrt (bool): Argument to include SMRT dataset
-        chromatography_column (bool): Argument to include chromatography column data and separate in different experiments
+        chromatography_column (bool): Argument to include chromatography column chromatography_data and separate in different experiments
 
     Returns:
         tuple: A tuple containing:
@@ -43,12 +49,18 @@ def get_my_data():
 
     # Ana añade comentario corto
     if (not os.path.exists("./resources/RepoRT_extracted_data.zip")
-            and not os.path.exists("./resources/descriptors_and_fingerprints.zip")):
+            and not os.path.exists("./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip")
+            and not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz")):
         try:
+            location=""
+            pattern=".*"
+            imputation=True
             RepoRT_directory = glob("./resources/RepoRT_data/*/*.tsv")
             rt_alt_par_list = []
             column_filter = None
-            alt_parents_data = pd.read_csv('./resources/RepoRT_classified.tsv', sep='\t', header=0, encoding='utf-8',
+            with zipfile.ZipFile('./resources/RepoRT_alternative_parents_classified.zip', 'r') as zip_ref:
+                with zip_ref.open("RepoRT_classified.tsv") as tsv_file:
+                    alt_parents_data = pd.read_csv(tsv_file, sep='\t', header=0, encoding='utf-8',
                                            dtype=object)
             for file in RepoRT_directory:
                 if re.search(r"_rtdata_canonical_success", file):
@@ -85,88 +97,70 @@ def get_my_data():
                 molecule_column_data = pd.merge(molecule_data, column_data, left_index=True, right_index=True,
                                                 how="inner")
                 molecule_column_data = molecule_column_data.fillna(0)
-                return molecule_column_data
+                tsv_buffer = io.StringIO()
+                molecule_column_data.to_csv(tsv_buffer, sep='\t', index=False)
+                tsv_data = tsv_buffer.getvalue()
+                with zipfile.ZipFile("./resources/RepoRT_extracted_data.zip", 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    zip_file.writestr("RepoRT_extracted_data.tsv", tsv_data)
             else:
                 print(f'No matches found with {pattern}')
         except Exception as e:
             print(f"Error:{e}")
 
     # Ana añade comentario corto
-    if not os.path.exists("./resources/descriptors_and_fingerprints_RepoRT.zip"):
+    if (not os.path.exists("./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip")
+            and not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz")):
         # TODO: Ana añade funcion de alberto y ligera modificacion final y quitar pass
+        # Download report_unique_inchis_descriptorsAndFingerprintsVectorized.zip file in
+        # https://upm365-my.sharepoint.com/:u:/g/personal/ana_amil_alumnos_upm_es/EZgWDOgcGCxGjg2nH9I3Z4cBduu1SHlbEQMgS9pjAnTVaA?e=1K6pmG
         pass
 
     # Ana añade comentario corto
-    if not os.path.exists("./resources/descriptors_and_fingerprints_RepoRT_prepared.pklz"):
-        data = pd.read_csv("./resources/RepoRT_extracted_data.zip", sep='\t', header=0, encoding='utf-8')
-        # TODO: extraer zip
-        """
-        del archivo  de alberto cojemos descriptors de los standares
-        " fingerprints de los standares
-        
-        dataframe de ./resources/RepoRT_extracted_data.zip coger el inchi, rt e info column y quitar los compuestos de smrt artificiales
-        
-        le añadimos las columnas de descriptors and fingerprints
-        
-        y salvamos y devolvemos X, y, descriptor_columns, fingerprints_columns, chromatography_columns = pickle.load(f)
-        
-        """
+    if not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz"):
 
+        with zipfile.ZipFile('./resources/RepoRT_extracted_data.zip', 'r') as zip_ref:
+            with zip_ref.open("RepoRT_classified_CCinformation.tsv") as tsv_file:
+                chromatography_data = pd.read_csv(tsv_file, sep='\t', header=0, encoding='utf-8')
+        with zipfile.ZipFile('./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip', 'r') as zip_ref:
+            with zip_ref.open("report_unique_inchis_descriptorsAndFingerprintsVectorized.csv") as tsv_file:
+                descriptors_fingerprints = pd.read_csv(tsv_file, sep=',', header=0, encoding='utf-8')
 
-        # TODO: eliminar esto cuando hagas lo anterior
-        descriptors = pd.read_csv("../resources/des_and_fgp_data/report_unique_inchis_descriptors.csv",
-                                  sep=',', header=0, encoding='utf-8')
-        fingerprints = pd.read_csv(
-            "../resources/des_and_fgp_data/report_unique_inchis_vectorfingerprintsVectorized.csv",
-            sep=',', header=0, encoding='utf-8')
-        columns_in_data = data.drop(columns="inchi.std").columns
-        columns_in_des_and_fgn = [i for i in columns_in_data if i in fingerprints]
-        descriptors = descriptors.drop(columns=columns_in_des_and_fgn).drop(columns="column.usp.code")
-        fingerprints = fingerprints.drop(columns=columns_in_des_and_fgn).drop(columns="column.usp.code")
+        columns_in_data = chromatography_data.drop(columns="inchi.std").columns
+        columns_in_des_and_fgn = [i for i in columns_in_data if i in descriptors_fingerprints]
+        descriptors_fingerprints = descriptors_fingerprints.drop(columns=columns_in_des_and_fgn).drop(columns="column.usp.code")
         columns_to_drop = ["name", "formula", "smiles.std", "inchikey.std", "classyfire.kingdom",
                            "classyfire.superclass",
                            "classyfire.class", "classyfire.subclass", "classyfire.level5", "classyfire.level6",
                            "alternative_parents", "comment", "column.name"]
-        data = data.drop(columns=columns_to_drop)
-        descriptors = descriptors[~descriptors["MW"].isnull()]
-        des_no_SMRT = pd.merge(data, descriptors, on="inchi.std")
-        fgp_no_SMRT = pd.merge(data.iloc[:, :3], fingerprints, on="inchi.std")
-        des_no_SMRT.to_csv("../resources/des_no_SMRT.tsv", sep='\t', index=False)
-        fgp_no_SMRT.to_csv("../resources/fgp_no_SMRT.tsv", sep='\t', index=False)
-
-
-        # Load the original files created with Alvadesk
-        descriptors = pd.read_csv("./resources/des_no_SMRT.tsv", sep="\t")
-        fingerprints = pd.read_csv("./resources/fgp_no_SMRT.tsv", sep="\t")
-
-        # Create the file that will be used for training
+        chromatography_data = chromatography_data.drop(columns=columns_to_drop)
+        descriptors_fingerprints = descriptors_fingerprints[~descriptors_fingerprints["MW"].isnull()]
         print('Merging')
-        descriptors = descriptors.drop("inchi.std", axis=1)
-        fingerprints = fingerprints.drop("inchi.std", axis=1)
+        merge_des_and_fgp = pd.merge(chromatography_data, descriptors_fingerprints, on="inchi.std")
+        chromatography_descriptors_fingerprints = merge_des_and_fgp.fillna(0)
+        chromatography_descriptors_fingerprints["rt"] = chromatography_descriptors_fingerprints["rt"] * 60
 
-        descriptors_and_fingerprints = pd.merge(descriptors, fingerprints, on=common_columns)
-        descriptors_and_fingerprints = descriptors_and_fingerprints.fillna(0)
-        descriptors_and_fingerprints["rt"] = descriptors_and_fingerprints["rt"]*60
-        X_desc = descriptors_and_fingerprints[descriptors.columns]
-        X_fgp = descriptors_and_fingerprints[fingerprints.drop(common_columns, axis=1).columns]
+        X_usp = merge_des_and_fgp.loc[:,"column.usp.code_0":"column.usp.code_L7"].columns
+        X_chromatography = merge_des_and_fgp.loc[:,"column.length":"flow_rate 17"].columns
+        X_descriptors = merge_des_and_fgp.loc[:, "MW":"chiralPhMoment"].columns
 
-        X = pd.concat([X_desc, X_fgp], axis=1)
-        labels_column = common_columns[1]
-        y = descriptors_and_fingerprints[labels_column].values.flatten()
+        X = merge_des_and_fgp.drop(columns="inchi.std")
+        y = X["rt"].values.flatten()
 
-        desc_cols = np.arange(X_desc.drop(common_columns, axis=1).shape[1], dtype='int')
-        fgp_cols = np.arange(X_desc.drop(common_columns, axis=1).shape[1], X.drop(common_columns, axis=1).shape[1], dtype='int')
+        usp_columns = np.arange(X_usp.shape[0], dtype='int')
+        chromatography_columns = np.arange(usp_columns[-1]+1,usp_columns[-1]+1+X_chromatography.shape[0], dtype='int')
+        descriptors_columns = np.arange(chromatography_columns[-1]+1,chromatography_columns[-1]+1+X_descriptors.shape[0], dtype='int')
+        fingerprints_columns = np.arange(descriptors_columns[-1], X.drop(["id", "rt"], axis=1).shape[1], dtype='int')
 
         # Save the file that will be use for training
-        with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT_prepared.pklz", "wb") as f:
-            pickle.dump([X, y, desc_cols, fgp_cols], f)
+        # with bz2.BZ2File("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz", "wb") as f:
+        #     pickle.dump([X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns], f)
 
     else:
-        with bz2.BZ2File("./resources/descriptors_and_fingerprints_RepoRT_prepared.pklz", "rb") as f:
-            X, y, descriptor_columns, fingerprints_columns, chromatography_columns = pickle.load(f)
+        with bz2.BZ2File("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz", "rb") as f:
+            X, y, usp_columns, chromatography_columns, descriptor_columns, fingerprints_columns = pickle.load(f)
 
 
-    return X, y, desc_cols, fgp_cols
+    return X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns
 
 
 

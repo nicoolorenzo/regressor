@@ -1,10 +1,5 @@
 .idea
-/resources/RepoRT_classified.tsv
-/resources/RepoRT_classified_CCinformation.tsv
-/resources/des_no_SMRT.tsv
-/resources/fgp_no_SMRT.tsv
-/resources/des_and_fgp_data/*
-/resources/descriptors_and_fingerprints_SMRT.pklz
+/resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip
 /resources/descriptors_and_fingerprints_RepoRT.pklz
 /results/*
 **/__pycache__

@@ -85,27 +85,15 @@ class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
             ('cor_selector', CorThreshold(threshold=self.cor_th)),
             ('f_selector', SelectKBest(score_func=f_regression, k=self.k))
         ])
-        # self.scaler = StandardScaler()
-        # self.scaler.set_output("pandas")
-        # self.imputer = SimpleImputer(missing_values=np.nan, strategy='median', add_indicator=True)
-        # self.var_threshold = VarianceThreshold()
-        # self.cor_selector = CorThreshold(threshold=self.cor_th)
-        # self.k_best = SelectKBest(score_func=f_regression, k=self.k)
 
     def fit(self, X, y=None):
         self._init_hidden_models()
-        #X_desc = X[:, self.desc_cols]
         X_desc = X.iloc[:, self.desc_cols]
         self._desc_pipeline.set_output(transform="pandas")
         self._desc_pipeline.fit(X_desc, y)
         return self
-    # def fit(self, X, y=None):
-    #     self._init_hidden_models()
-    #     X_desc = X.iloc[:, self.desc_cols]
-    #     return self
 
     def transform(self, X, y=None):
-        # X_desc = X[:, self.desc_cols]
         X_desc = X.iloc[:, self.desc_cols]
         self._desc_pipeline.set_output(transform="pandas")
         X_desc_proc = self._desc_pipeline.transform(X_desc)
@@ -114,24 +102,6 @@ class DescriptorsPreprocessor(BaseEstimator, TransformerMixin):
         # columns can be considered binary
         self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, new_X))[0]
         return new_X
-
-    # def transform(self, X, y=None):
-    #     self._init_hidden_models()
-    #     X_desc = X.iloc[:, self.desc_cols]
-    #     X_desc_proc = self.scaler.fit_transform(X_desc, y)
-    #     X_desc_proc = self.imputer.fit_transform(X_desc_proc, y)
-    #     X_df_desc_proc = pd.DataFrame(X_desc_proc, columns=self.columns_name)
-    #     X_desc_proc = self.var_threshold.fit_transform(X_desc_proc, y)
-    #     X_desc_proc = self.cor_selector.fit_transform(X_desc_proc, y)
-    #     # X_desc_proc = self.k_best.fit_transform(X_desc_proc, y)
-    #     X_df_cor = pd.DataFrame(X_desc_proc)
-#
-    #     new_X = X_desc_proc
-    #     # Annotate which columns are related to descriptors an fingerprints after transformation. Also, annotate which
-    #     # columns can be considered binary
-    #     self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, new_X))[0]
-    #     return new_X
-
 
 class FgpPreprocessor(BaseEstimator, TransformerMixin):
     def __init__(self, fgp_cols, p=0.9):
@@ -143,14 +113,12 @@ class FgpPreprocessor(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         self._init_hidden_models()
-        # X_fgp = X[:, self.fgp_cols]
         X_fgp = X.iloc[:, self.fgp_cols]
         self._fgp_vs.set_output(transform="pandas")
         _ = self._fgp_vs.fit_transform(X_fgp)
         return self
 
     def transform(self, X, y=None):
-        # X_fgp = X[:, self.fgp_cols]
         X_fgp = X.iloc[:, self.fgp_cols]
         self.transformed_binary_cols = np.where(np.apply_along_axis(is_binary_feature, 0, X_fgp))[0]
         return X_fgp
