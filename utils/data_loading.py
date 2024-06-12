@@ -52,9 +52,9 @@ def get_my_data():
             and not os.path.exists("./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip")
             and not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz")):
         try:
-            location=""
-            pattern=".*"
-            imputation=True
+            location = ""
+            pattern = ".*"
+            imputation = True
             RepoRT_directory = glob("./resources/RepoRT_data/*/*.tsv")
             rt_alt_par_list = []
             column_filter = None
@@ -110,9 +110,8 @@ def get_my_data():
     # Ana añade comentario corto
     if (not os.path.exists("./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip")
             and not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz")):
-        # TODO: Ana añade funcion de alberto y ligera modificacion final y quitar pass
-        # Download report_unique_inchis_descriptorsAndFingerprintsVectorized.zip file in
-        # https://upm365-my.sharepoint.com/:u:/g/personal/ana_amil_alumnos_upm_es/EZgWDOgcGCxGjg2nH9I3Z4cBduu1SHlbEQMgS9pjAnTVaA?e=1K6pmG
+        print("Download report_unique_inchis_descriptorsAndFingerprintsVectorized.zip file in "
+              "https://upm365-my.sharepoint.com/:u:/g/personal/ana_amil_alumnos_upm_es/EZgWDOgcGCxGjg2nH9I3Z4cBduu1SHlbEQMgS9pjAnTVaA?e=1K6pmG")
         pass
 
     # Ana añade comentario corto
@@ -140,7 +139,7 @@ def get_my_data():
         chromatography_descriptors_fingerprints["rt"] = chromatography_descriptors_fingerprints["rt"] * 60
 
         X_usp = merge_des_and_fgp.loc[:,"column.usp.code_0":"column.usp.code_L7"].columns
-        X_chromatography = merge_des_and_fgp.loc[:,"column.length":"flow_rate 17"].columns
+        X_chromatography = merge_des_and_fgp.loc[:, "column.length":"flow_rate 17"].columns
         X_descriptors = merge_des_and_fgp.loc[:, "MW":"chiralPhMoment"].columns
 
         X = merge_des_and_fgp.drop(columns="inchi.std")
@@ -148,12 +147,12 @@ def get_my_data():
 
         usp_columns = np.arange(X_usp.shape[0], dtype='int')
         chromatography_columns = np.arange(usp_columns[-1]+1,usp_columns[-1]+1+X_chromatography.shape[0], dtype='int')
-        descriptors_columns = np.arange(chromatography_columns[-1]+1,chromatography_columns[-1]+1+X_descriptors.shape[0], dtype='int')
-        fingerprints_columns = np.arange(descriptors_columns[-1], X.drop(["id", "rt"], axis=1).shape[1], dtype='int')
+        descriptors_columns = np.arange(chromatography_columns[-1]+1, chromatography_columns[-1]+1+X_descriptors.shape[0], dtype='int')
+        fingerprints_columns = np.arange(descriptors_columns[-1]+1, X.drop(["id", "rt"], axis=1).shape[1], dtype='int')
 
         # Save the file that will be use for training
-        # with bz2.BZ2File("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz", "wb") as f:
-        #     pickle.dump([X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns], f)
+        with bz2.BZ2File("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz", "wb") as f:
+            pickle.dump([X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns], f)
 
     else:
         with bz2.BZ2File("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz", "rb") as f:

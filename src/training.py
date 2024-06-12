@@ -40,12 +40,12 @@ def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_
 
     objective = create_objective(preprocessed_train_split_X, preprocessed_train_split_y,
                                  preprocessed_test_split_X, preprocessed_test_split_y)
-    trials = [trial for trial in study.get_trials() if trial.state in [TrialState.COMPLETE, TrialState.PRUNED]]
-    if not keep_going:
-        n_trials = n_trials - len(trials)
-    if n_trials > 0:
-        print(f"Starting {n_trials} trials")
-        study.optimize(objective, n_trials=n_trials)
+    # trials = [trial for trial in study.get_trials() if trial.state in [TrialState.COMPLETE, TrialState.PRUNED]]
+    # if not keep_going:
+    #     n_trials = n_trials - len(trials)
+    # if n_trials > 0:
+    #     print(f"Starting {n_trials} trials")
+    #     study.optimize(objective, n_trials=n_trials)
 
     best_params = study.best_params
     estimator = create_dnn(preprocessed_train_split_X.shape[1], best_params)

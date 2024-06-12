@@ -11,7 +11,7 @@ import random
 
 # Parameters
 number_of_folds = 1
-number_of_trials = 2
+number_of_trials = 0
 use_chromatography_column = True
 keep_all_chromatographic_columns_in_preprocessing = True
 split_train_test_by_experiment = True
@@ -31,7 +31,6 @@ if __name__ == "__main__":
             experiment = int(X[X["id"].str.startswith(value)].shape[0])
             experiment_data[value] = (number_molecules, number_molecules + experiment)
             number_molecules = number_molecules + experiment
-
 
     if experiment != ["all"] and not use_chromatography_column:
         experiment_key_values = [(key, experiment_data.get(key)) for key in experiment]
