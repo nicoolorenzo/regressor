@@ -10,8 +10,7 @@ from utils.stratification import stratify_y
 import random
 
 # Parameters
-number_of_folds = 1
-number_of_trials = 0
+
 use_chromatography_column = True
 keep_all_chromatographic_columns_in_preprocessing = True
 split_train_test_by_experiment = True

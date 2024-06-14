@@ -47,7 +47,12 @@ def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_
     #     study.optimize(objective, n_trials=n_trials)
 
     # best_params = study.best_params
-    estimator = create_dnn(preprocessed_train_split_X.shape[1], best_params)
+    # estimator = create_dnn(preprocessed_train_split_X.shape[1], best_params)
+    # estimator = fit_dnn(estimator,
+    #                     preprocessed_train_split_X,
+    #                     preprocessed_train_split_y,
+    #                     best_params)
+    estimator = create_dnn(preprocessed_train_split_X.shape[1])
     estimator = fit_dnn(estimator,
                         preprocessed_train_split_X, 
                         preprocessed_train_split_y)

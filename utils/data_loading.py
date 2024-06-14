@@ -135,10 +135,10 @@ def get_my_data():
         descriptors_fingerprints = descriptors_fingerprints[~descriptors_fingerprints["MW"].isnull()]
         print('Merging')
         merge_des_and_fgp = pd.merge(chromatography_data, descriptors_fingerprints, on="inchi.std")
-        chromatography_descriptors_fingerprints = merge_des_and_fgp.fillna(0)
-        chromatography_descriptors_fingerprints["rt"] = chromatography_descriptors_fingerprints["rt"] * 60
+        merge_des_and_fgp = merge_des_and_fgp.fillna(0)
+        merge_des_and_fgp["rt"] = merge_des_and_fgp["rt"].astype("float32") * 60
 
-        X_usp = merge_des_and_fgp.loc[:,"column.usp.code_0":"column.usp.code_L7"].columns
+        X_usp = merge_des_and_fgp.loc[:, "column.usp.code_0":"column.usp.code_L7"].columns
         X_chromatography = merge_des_and_fgp.loc[:, "column.length":"flow_rate 17"].columns
         X_descriptors = merge_des_and_fgp.loc[:, "MW":"chiralPhMoment"].columns
 
