@@ -119,10 +119,10 @@ def get_my_data():
 
         with zipfile.ZipFile('./resources/RepoRT_extracted_data.zip', 'r') as zip_ref:
             with zip_ref.open("RepoRT_classified_CCinformation.tsv") as tsv_file:
-                chromatography_data = pd.read_csv(tsv_file, sep='\t', header=0, encoding='utf-8')
+                chromatography_data = pd.read_csv(tsv_file, sep='\t', header=0, encoding='utf-8', dtype=object)
         with zipfile.ZipFile('./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip', 'r') as zip_ref:
             with zip_ref.open("report_unique_inchis_descriptorsAndFingerprintsVectorized.csv") as tsv_file:
-                descriptors_fingerprints = pd.read_csv(tsv_file, sep=',', header=0, encoding='utf-8')
+                descriptors_fingerprints = pd.read_csv(tsv_file, sep=',', header=0, encoding='utf-8', dtype=object)
 
         columns_in_data = chromatography_data.drop(columns="inchi.std").columns
         columns_in_des_and_fgn = [i for i in columns_in_data if i in descriptors_fingerprints]
@@ -156,7 +156,7 @@ def get_my_data():
 
     else:
         with bz2.BZ2File("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz", "rb") as f:
-            X, y, usp_columns, chromatography_columns, descriptor_columns, fingerprints_columns = pickle.load(f)
+            X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns = pickle.load(f)
 
 
     return X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns

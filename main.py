@@ -114,9 +114,7 @@ if __name__ == "__main__":
             columns_deleted_preprocessing = [column for column in train_split_X.columns if column not in preprocessed_train_split_X]
 
             print("Param search")
-            trained_dnn = training.optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y,
-                                                          preprocessed_test_split_X, preprocessed_test_split_y,
-                                                          number_of_trials, fold, features)
+            trained_dnn = training.optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y)
 
             print("Saving dnn used for this fold")
             trained_dnn.save(f"./results/dnn-{fold}-{features}.keras")

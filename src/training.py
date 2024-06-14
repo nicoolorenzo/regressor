@@ -26,20 +26,19 @@ def create_objective(X_tr, y_tr, X_te, y_te):
     return objective
 
 
-def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y, preprocessed_test_split_X,
-                           preprocessed_test_split_y, number_of_trials, fold, features):
-    n_trials = number_of_trials
-    keep_going = False
-
-    study = optuna.create_study(study_name=f"foundation_cross_validation-fold-{fold}-{features}",
-                                direction='minimize',
-                                storage="sqlite:///./results/cv.db",
-                                load_if_exists=True,
-                                pruner=optuna.pruners.MedianPruner()
-                                )
-
-    objective = create_objective(preprocessed_train_split_X, preprocessed_train_split_y,
-                                 preprocessed_test_split_X, preprocessed_test_split_y)
+def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y):
+    # n_trials = number_of_trials
+    # keep_going = False
+#
+    # study = optuna.create_study(study_name=f"foundation_cross_validation-fold-{fold}-{features}",
+    #                             direction='minimize',
+    #                             storage="sqlite:///./results/cv.db",
+    #                             load_if_exists=True,
+    #                             pruner=optuna.pruners.MedianPruner()
+    #                             )
+#
+    # objective = create_objective(preprocessed_train_split_X, preprocessed_train_split_y,
+    #                              preprocessed_test_split_X, preprocessed_test_split_y)
     # trials = [trial for trial in study.get_trials() if trial.state in [TrialState.COMPLETE, TrialState.PRUNED]]
     # if not keep_going:
     #     n_trials = n_trials - len(trials)
@@ -47,12 +46,11 @@ def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_
     #     print(f"Starting {n_trials} trials")
     #     study.optimize(objective, n_trials=n_trials)
 
-    best_params = study.best_params
+    # best_params = study.best_params
     estimator = create_dnn(preprocessed_train_split_X.shape[1], best_params)
     estimator = fit_dnn(estimator,
                         preprocessed_train_split_X, 
-                        preprocessed_train_split_y,
-                        best_params)
+                        preprocessed_train_split_y)
 
     return estimator
 

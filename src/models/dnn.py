@@ -54,7 +54,7 @@ def fit_dnnNot(dnn, X, y, optuna_params):
     )
     return dnn
 
-def create_dnn(n_features, optuna_params):
+def create_dnn(n_features):
     activation1 = keras.activations.swish #optuna_params["activation1"]
     input_deep = keras.layers.Input(shape=(n_features,))
     layer_previous = Dense(2500, activation=activation1)(input_deep)
@@ -89,7 +89,7 @@ def create_dnn(n_features, optuna_params):
 
 stop_here_please = EarlyStopping(patience=5)
 
-def fit_dnn(dnn, X, y, optuna_params):
+def fit_dnn(dnn, X, y):
     dnn.compile(
         optimizer=keras.optimizers.Adam(learning_rate=9*10 ** (-6)),
         loss=keras.losses.MeanAbsoluteError(),
@@ -102,7 +102,7 @@ def fit_dnn(dnn, X, y, optuna_params):
         x=X,
         y=y,
         batch_size=16,
-        epochs=50,
+        epochs=25,
         verbose=1,
         validation_split=0.1
         ,callbacks=[stop_here_please]
