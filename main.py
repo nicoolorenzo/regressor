@@ -12,8 +12,8 @@ import random
 # Parameters
 
 use_chromatography_column = True
-keep_all_chromatographic_columns_in_preprocessing = True
-split_train_test_by_experiment = True
+keep_all_chromatographic_columns_in_preprocessing = False
+split_train_test_by_experiment = False
 
 
 if __name__ == "__main__":
@@ -62,7 +62,7 @@ if __name__ == "__main__":
             test_split_y = np.array(test_data["rt"]).astype('float32').flatten()
 
         else:
-            X = X.drop(["id", "rt"], axis=1).astype('float32')
+            X_ex = X_ex.drop(["id", "rt"], axis=1).astype('float32')
             y = np.array(y).astype('float32').flatten()
             train_split_X, test_split_X, train_split_y, test_split_y = train_test_split(X_ex, y_ex, test_size=0.2,
                                                                                         random_state=42)

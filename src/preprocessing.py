@@ -32,14 +32,14 @@ def preprocess_X_except_chromatography(usp_columns, chromatography_columns, desc
     else:
         preproc = Preprocessor(desc_cols=descriptors_columns, fgp_cols=fingerprints_columns)
     scaler = StandardScaler().set_output(transform="pandas")
-    chromatography_train = scaler.fit_transform(train_X.loc[:, chromatography_columns])
-    chromatography_test = scaler.fit_transform(test_X.loc[:, chromatography_columns])
-    chromatography_train = pd.concat([train_X.loc[:, usp_columns], chromatography_train], axis=1)
-    chromatography_test = pd.concat([test_X.loc[:, usp_columns], chromatography_test], axis=1)
+    chromatography_train = scaler.fit_transform(train_X.iloc[:, chromatography_columns])
+    chromatography_test = scaler.fit_transform(test_X.iloc[:, chromatography_columns])
+    chromatography_train = pd.concat([train_X.iloc[:, usp_columns], chromatography_train], axis=1)
+    chromatography_test = pd.concat([test_X.iloc[:, usp_columns], chromatography_test], axis=1)
     preproc_train_X = preproc.fit_transform(train_X, train_y)
     preproc_test_X = preproc.transform(test_X, test_y)
     preproc_train_X = pd.concat([chromatography_train, preproc_train_X], axis=1)
-    preproc_test_X= pd.concat([chromatography_test, preproc_test_X], axis=1)
+    preproc_test_X = pd.concat([chromatography_test, preproc_test_X], axis=1)
     return preproc_train_X, preproc_test_X
 
 

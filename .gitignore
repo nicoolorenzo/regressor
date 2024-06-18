@@ -1,5 +1,6 @@
 .idea
 /resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip
 /resources/descriptors_and_fingerprints_RepoRT.pklz
+/resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz
 /results/*
 **/__pycache__
