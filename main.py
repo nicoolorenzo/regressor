@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from src import preprocessing, training
 from utils.data_loading import get_my_data
 from src.evaluation import evaluate_model
+import tensorflow.keras as keras
 from utils.stratification import stratify_y
 import random
 
@@ -21,8 +22,9 @@ if __name__ == "__main__":
     print("Loading data")
     X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns = get_my_data()
 
-    experiment = ["all"]
+    experiments = ["all"]
     if not use_chromatography_column:
+        X = X.sort_values("id")
         number_columns = X["id"].str[0:4].drop_duplicates().values
         experiment_data = {}
         number_molecules = 0
@@ -31,12 +33,12 @@ if __name__ == "__main__":
             experiment_data[value] = (number_molecules, number_molecules + experiment)
             number_molecules = number_molecules + experiment
 
-    if experiment != ["all"] and not use_chromatography_column:
-        experiment_key_values = [(key, experiment_data.get(key)) for key in experiment]
-    elif experiment == ["all"] and not use_chromatography_column:
+    if experiments != ["all"] and not use_chromatography_column:
+        experiment_key_values = [(key, experiment_data.get(key)) for key in experiments]
+    elif experiments == ["all"] and not use_chromatography_column:
         experiment_key_values = [(key, value) for key, value in experiment_data.items()]
     else:
-        experiment_key_values= [("all", 0)]
+        experiment_key_values = [("all", 0)]
 
     for key, values in experiment_key_values:
         if not use_chromatography_column:
