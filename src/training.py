@@ -1,6 +1,9 @@
 from optuna.trial import TrialState
 import numpy as np
 import optuna
+import matplotlib.pyplot as plt
+import pandas as pd
+
 from src.models.dnn import suggest_params, create_dnn, fit_dnn
 
 
@@ -26,7 +29,7 @@ def create_objective(X_tr, y_tr, X_te, y_te):
     return objective
 
 
-def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y):
+def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_y, showPlot, features):
     # n_trials = number_of_trials
     # keep_going = False
 #
@@ -53,11 +56,27 @@ def optimize_and_train_dnn(preprocessed_train_split_X, preprocessed_train_split_
     #                     preprocessed_train_split_y,
     #                     best_params)
     estimator = create_dnn(preprocessed_train_split_X.shape[1])
-    estimator = fit_dnn(estimator,
+    estimator, history = fit_dnn(estimator,
                         preprocessed_train_split_X, 
                         preprocessed_train_split_y)
 
+    if showPlot:
+        pd.DataFrame(history.history).plot(
+            figsize=(8, 5), xlim=[0, 25], ylim=[0, 1], grid=True, xlabel="Epoch",
+            style=["r--", "r--.", "b-", "b-*"])
+        plt.legend(loc="lower left")  # extra code
+        save_fig("keras_learning_curves_plot"+features)  # extra code
+        plt.show()
+
+
     return estimator
+
+
+def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
+    path = f"{fig_id}.{fig_extension}"
+    if tight_layout:
+        plt.tight_layout()
+    plt.savefig(path, format=fig_extension, dpi=resolution)
 
 
 

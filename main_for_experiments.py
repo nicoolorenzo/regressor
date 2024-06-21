@@ -12,7 +12,7 @@ import random
 # Parameters
 showPlot = False
 save_predictions = True
-use_chromatography_column = True
+use_chromatography_column = False
 keep_all_chromatographic_columns_in_preprocessing = False
 split_train_test_by_experiment = False
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns = get_my_data()
 
 
-    experiments = ['all']
+    experiments = ['0001']
 
     if not use_chromatography_column:
         X = X.sort_values("id")
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 prediction_test.to_csv(f"./results/rt_test_predictions-{features}-{key}.csv", sep=",")
 
             print("Saving dnn used for this fold")
-            trained_dnn.save(f"./results/dnn-{fold}-{features}.keras")
+            # trained_dnn.save(f"./results/dnn-{fold}-{key}-{features}.keras")
 
             print("Evaluation of the model & saving of the results")
             evaluate_model(trained_dnn, preprocessed_test_split_X, preprocessed_test_split_y, preproc_y, fold,

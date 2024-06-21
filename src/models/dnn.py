@@ -83,7 +83,8 @@ def create_dnn(n_features):
     layers_deep_and_wide_small = layer_previous
     output = Dense(1)(layers_deep_and_wide_small)
     model = keras.Model(inputs=[input_deep], outputs=[output])
-
+    # output = Dense(1)(layer_2)
+    # model = keras.Model(inputs=[input_deep], outputs=[output])
     return model
 
 
@@ -95,16 +96,16 @@ def fit_dnn(dnn, X, y):
         loss=keras.losses.MeanAbsoluteError(),
         metrics=[
             keras.metrics.MeanSquaredError(),
-            keras.metrics.MeanAbsolutePercentageError()
+            #keras.metrics.MeanAbsolutePercentageError()
         ],
     )
-    dnn.fit(
+    history = dnn.fit(
         x=X,
         y=y,
         batch_size=16,
-        epochs=25,
+        epochs=5,
         verbose=1,
-        validation_split=0.1
-        ,callbacks=[stop_here_please]
+        validation_split=0.1,
+        callbacks=[stop_here_please]
     )
-    return dnn
+    return dnn, history
