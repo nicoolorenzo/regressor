@@ -11,7 +11,7 @@ import random
 
 # Parameters
 showPlot = False
-save_predictions = True
+save_predictions = False
 use_chromatography_column = False
 keep_all_chromatographic_columns_in_preprocessing = False
 split_train_test_by_experiment = False
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     X, y, usp_columns, chromatography_columns, descriptors_columns, fingerprints_columns = get_my_data()
 
 
-    experiments = ['0001']
+    experiments = ["all"]
 
     if not use_chromatography_column:
         X = X.sort_values("id")
@@ -74,6 +74,7 @@ if __name__ == "__main__":
         features_list = ["descriptors", "fingerprints", "all"]
         for features in features_list:
             # Preprocess X
+            print(f"experiment-{key}-{features}")
             if not keep_all_chromatographic_columns_in_preprocessing and use_chromatography_column:
                 (preprocessed_train_split_X, preprocessed_test_split_X) = preprocessing.preprocess_X_except_chromatography(
                      usp_columns=usp_columns,

@@ -103,7 +103,7 @@ def fit_dnn(dnn, X, y):
         x=X,
         y=y,
         batch_size=16,
-        epochs=5,
+        epochs=50,
         verbose=1,
         validation_split=0.1,
         callbacks=[stop_here_please]
