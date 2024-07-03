@@ -13,41 +13,25 @@ import io
 
 
 def get_my_data():
-    #FIXME: Ana docstring
     """
-        Accesses RepoRT chromatography_data based on a specified molecule pattern and column.
+        Accesses RepoRT chromatography data based on a specific molecule and column pattern and merges it with alvaDesc
+        descriptors and fingerprints
 
-    This function searches for files in the '../chromatography_data/*/' RepoRT_directory containing molecule and retention time chromatography_data.
-    It reads the chromatography_data from these files, filters it based on the provided molecule pattern and column location,
-    and merges it with an alternative parents dataset.
-
-    Args:
-        pattern (str, optional): Molecule pattern or name to search for in the chromatography_data. Default value "", representing
-        all types of molecules.
-        location (str, optional): Column name to search for the pattern. Default value ".*", representing all columns.
-        imputation (bool, optional): Indicates whether training chromatography_data processing is performed. Default value True.
-
-    Returns:
-        DataFrame: Processed DataFrame containing the merged chromatography_data with its chromatographic information.
-
-    Load or merge Alvadesk files containing descriptors and fingerprints, returning the necessary chromatography_data for training.
-
-    Args:
-        common_columns (list): List of common columns used to merge descriptors and fingerprints.
-        is_smoke_test (bool): Argument to create or to load a smaller dataset
-        is_smrt (bool): Argument to include SMRT dataset
-        chromatography_column (bool): Argument to include chromatography column chromatography_data and separate in different experiments
+    This function filters RepoRT data based on the provided molecule pattern and column location,
+    and merges it with an alternative parents dataset. Then it loads and merges alvaDesc files containing descriptors and
+    fingerprints, returning the necessary chromatography data for training.
 
     Returns:
         tuple: A tuple containing:
-            - X (DataFrame): The merged dataset consisting of descriptors and fingerprints.
+            - X (DataFrame): The merged dataset consisting of chromatographic data, descriptors and fingerprints.
             - y (DataFrame): The target values (correct rt averages).
+            - usp_cols (numpy.ndarray): Indices of columns corresponding to usp columns in the merged dataset.
+            - chromatography_columns (numpy.ndarray): Indices of columns corresponding to chromatographic columns in the merged dataset.
             - desc_cols (numpy.ndarray): Indices of columns corresponding to descriptors in the merged dataset.
             - fgp_cols (numpy.ndarray): Indices of columns corresponding to fingerprints in the merged dataset.
-            - experiment_data (dict): Position of each experiment in X if chromatography_column is True
     """
 
-    # Ana añade comentario corto
+    # Obtain chromatographic data from RepoRT
     if (not os.path.exists("./resources/RepoRT_extracted_data.zip")
             and not os.path.exists("./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip")
             and not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz")):
@@ -107,14 +91,14 @@ def get_my_data():
         except Exception as e:
             print(f"Error:{e}")
 
-    # Ana añade comentario corto
+    # Load alvaDesc files containing descriptors and fingerprints.
     if (not os.path.exists("./resources/report_unique_inchis_descriptorsAndFingerprintsVectorized.zip")
             and not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz")):
         print("Download report_unique_inchis_descriptorsAndFingerprintsVectorized.zip file in "
               "https://upm365-my.sharepoint.com/:u:/g/personal/ana_amil_alumnos_upm_es/EZgWDOgcGCxGjg2nH9I3Z4cBduu1SHlbEQMgS9pjAnTVaA?e=1K6pmG")
         pass
 
-    # Ana añade comentario corto
+    # Merge alvaDesc files with chromatography data for training.
     if not os.path.exists("./resources/chromatography_descriptors_and_fingerprints_RepoRT.pklz"):
 
         with zipfile.ZipFile('./resources/RepoRT_extracted_data.zip', 'r') as zip_ref:
